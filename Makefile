@@ -1,5 +1,5 @@
 
-.PHONE: all clean gb cpc
+.PHONY: all clean gb cpc
 
 all: gb cpc
 
