@@ -1,5 +1,5 @@
         extern  _main
-        section code_user
+        section CODE_1
 _main:
         ; Wait for VSYNC
         ld      b, 0xf5                 ; PPI port B input
@@ -18,7 +18,6 @@ wait_vsync:
 
         ld      hl, 96                  ; Character row
 
-        di
         ld      (saveSP+1), sp          ; Save the stack pointer
 
         add     hl, hl                  ; Multiply by 2
@@ -40,11 +39,11 @@ nextLine:
 
 saveSP:
         ld      sp, -1
-;        ei
+
         halt
         ret
 
-        section rodata_user
+        section RODATA_1
 testSprite:
         db      %00110000, %11000000
         db      %01110000, %11100000
