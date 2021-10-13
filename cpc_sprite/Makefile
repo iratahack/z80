@@ -1,26 +1,31 @@
 AS=z88dk-asmpp
+LD=zcc
+PROJ=sprite
 
 ASMSRC=$(wildcard *.asm)
 OBJECTS=$(ASMSRC:.asm=.o)
 
+LDFLAGS= +cpc -crt0 crt/crt.asm -m
+
+
 .PHONY: all clean run dis
 
-all: sprite.dsk
+all: $(PROJ).dsk
 
 clean:
 	rm -f *.[io] *.dsk *.bin *.cpc *.map *.sym *.com
  
-dis: sprite.bin
-	z88dk-dis -o 0x1200 -x sprite.map sprite.bin | less
+dis: $(PROJ)_code.bin
+	z88dk-dis -o 0x1200 -x sprite.map sprite_code.bin | less
 
-run: sprite.dsk
-	caprice32.launcher sprite.dsk -a run\"sprite.cpc
+run: $(PROJ).dsk
+	caprice32.launcher $(PROJ).dsk -a run\"$(PROJ).cpc
 
-sprite.dsk: $(OBJECTS)
-	zcc +cpc -m -subtype=dsk -create-app -o $@ $(OBJECTS)
+$(PROJ).dsk: $(PROJ)_code.bin
+	z88dk-appmake +cpc --disk -b $(PROJ)_code.bin -o $(PROJ).cpc --org 0x1200
 
-sprite.bin: $(OBJECTS)
-	zcc +cpc -m -create-app -o $@ $(OBJECTS)
+$(PROJ)_code.bin: $(OBJECTS)
+	$(LD) $(LDFLAGS) $(OBJECTS) -o $(PROJ)
 
 %.o: %.asm
 	$(AS) $(ASFLAGS) $<

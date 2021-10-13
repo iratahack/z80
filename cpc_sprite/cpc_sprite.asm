@@ -1,11 +1,22 @@
         extern  _main
+        section code_user
 _main:
-        push    af
-        push    bc
-        push    de
-        push    hl        
-        
-        ld      hl, 3                   ; Character row
+        ; Wait for VSYNC
+        ld      b, 0xf5                 ; PPI port B input
+wait_vsync:
+        in      a, (c)                  ; read PPI port B input
+                                        ; (bit 0 = "1" if vsync is active,
+                                        ;  or bit 0 = "0" if vsync is in-active)
+        rra                             ; put bit 0 into carry flag
+        jp      nc, wait_vsync          ; if carry not set, loop, otherwise continue
+
+        ; change border colour to black
+        ld      bc, 0x7F10
+        out     (c), c
+        ld      c, 0x54
+        out     (c), c
+
+        ld      hl, 96                  ; Character row
 
         di
         ld      (saveSP+1), sp          ; Save the stack pointer
@@ -20,21 +31,20 @@ _main:
 
 nextLine:
         pop     de                      ; Pop screen pixel row address
+        ld      a, 40
+        add     a, e
+        ld      e, a
         ldi
         ldi
         djnz    nextLine                ; Loop for next pixel row
 
 saveSP:
         ld      sp, -1
-        ei
-
-        pop     hl
-        pop     de
-        pop     bc
-        pop     af
-
+;        ei
+        halt
         ret
 
+        section rodata_user
 testSprite:
         db      %00110000, %11000000
         db      %01110000, %11100000
@@ -52,7 +62,7 @@ testSprite:
 ;     |     |
 ;     +--+--+
 ;        |
-;        +--------------------------- Row lower [2/0]
+;        +--------------------------- Row lower [2:0]
 
 
 
