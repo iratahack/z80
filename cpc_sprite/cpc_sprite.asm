@@ -1,5 +1,5 @@
         extern  _main
-        section CODE_1
+        section CODE_0
 _main:
         ; Wait for VSYNC
         ld      b, 0xf5                 ; PPI port B input
@@ -43,7 +43,7 @@ saveSP:
         halt
         ret
 
-        section RODATA_1
+        section RODATA_0
 testSprite:
         db      %00110000, %11000000
         db      %01110000, %11100000

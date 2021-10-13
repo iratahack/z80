@@ -14,8 +14,8 @@ IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
 ENDIF
 
-        SECTION BANK_1
-        ORG     CRT_ORG_BANK_1
+        SECTION BANK_0
+        ORG     CRT_ORG_BANK_0
 crt0:
         di
 IF  CRT_INITIALIZE_BSS
@@ -45,9 +45,8 @@ nextBSSSection:
         ld      a, (hl)                 ; Get the bank
         inc     hl
 
-		; Switch memory banks
-;        ld      bc, IO_BANK
-;        out     (c), a
+	; Switch memory banks
+        call    bankSwitch
 
         ld      c, (hl)
         inc     hl
@@ -77,26 +76,28 @@ sectionDone:
 
 ENDIF
 
+        include "bankswitch.asm"
+
         SECTION RODATA_1
 bssTable:
 IFDEF   CRT_ORG_BANK_0
         dw      __BSS_0_head
-        db      -1
+        db      0xc0
         dw      __BSS_0_tail-__BSS_0_head
 ENDIF
 IFDEF   CRT_ORG_BANK_1
         dw      __BSS_1_head
-        db      -1
+        db      0xc0
         dw      __BSS_1_tail-__BSS_1_head
 ENDIF
 IFDEF   CRT_ORG_BANK_2
         dw      __BSS_2_head
-        db      -1
+        db      0xc0
         dw      __BSS_2_tail-__BSS_2_head
 ENDIF
 IFDEF   CRT_ORG_BANK_3
         dw      __BSS_3_head
-        db      -1
+        db      0xc0
         dw      __BSS_3_tail-__BSS_3_head
 ENDIF
         dw      0x0000
@@ -107,7 +108,7 @@ ENDIF
 
 IFDEF   CRT_ORG_BANK_0
         SECTION BANK_0
-        org     CRT_ORG_BANK_0
+;        org     CRT_ORG_BANK_0
         SECTION CODE_0
         SECTION RODATA_0
         SECTION DATA_0
@@ -117,7 +118,7 @@ ENDIF
 
 IFDEF   CRT_ORG_BANK_1
         SECTION BANK_1
-;        org     CRT_ORG_BANK_1
+        org     CRT_ORG_BANK_1
         SECTION CODE_1
         SECTION RODATA_1
         SECTION DATA_1
