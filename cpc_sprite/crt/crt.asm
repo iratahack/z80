@@ -3,33 +3,127 @@
         EXTERN  __BSS_1_head
         EXTERN  __BSS_2_head
         EXTERN  __BSS_3_head
+        EXTERN  __BSS_4_head
+        EXTERN  __BSS_5_head
+        EXTERN  __BSS_6_head
+        EXTERN  __BSS_7_head
         EXTERN  __BSS_0_tail
         EXTERN  __BSS_1_tail
         EXTERN  __BSS_2_tail
         EXTERN  __BSS_3_tail
+        EXTERN  __BSS_4_tail
+        EXTERN  __BSS_5_tail
+        EXTERN  __BSS_6_tail
+        EXTERN  __BSS_7_tail
 
         extern  _main
+
+        defc    mc_start_program=0xbd16
+        defc    kl_rom_walk=0xbccb
+        defc    scr_set_mode=0xbc0e
+        defc    current_drive=0xbe7d
+        defc    cas_in_open=0xbc77
+        defc    cas_in_direct=0xbc83
+        defc    cas_in_close=0xbc7a
 
 IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
 ENDIF
+IFNDEF  CRT_FILL_STACK
+        DEFC    CRT_FILL_STACK=0
+ENDIF
 
-        SECTION BANK_0
-        ORG     CRT_ORG_BANK_0
+        SECTION CODE
+        ORG     CRT_ORG_CODE
+        ;;------------------------------------------------------------------------
+        ;; store the drive number the loader was run from
+        ld      a, (current_drive)
+        ld      (drive+1), a
+
+        ;;------------------------------------------------------------------------
+        ld      c, 0xff                 ;; disable all roms
+        ld      hl, crt0                ;; execution address for program
+        call    mc_start_program        ;; start it
+
 crt0:
+        call    kl_rom_walk             ;; enable all roms
+
+        ;;------------------------------------------------------------------------
+        ;; when AMSDOS is enabled, the drive reverts back to drive 0!
+        ;; This will restore the drive number to the drive the loader was run from
+drive:
+        ld      a, -1
+        ld      (current_drive), a
+
+        ;;------------------------------------------------------------------------
+        ;; set screen mode 1
+
+        ld      a, 1
+        call    scr_set_mode
+
         di
+
+IFDEF   REGISTER_SP
+        ld      sp, REGISTER_SP
+ENDIF
+
+        call    loadBanks
+
 IF  CRT_INITIALIZE_BSS
         call    bssInit
 ENDIF
-        call    _main
 
-        ei
+        ;
+        ; Fill the stack with a known pattern so
+        ; we can see how much we are using.
+        ;
+        ; Interrupts should be disabled so no need to worry
+        ; about ISR accessing the stack.
+        ;
+IF  CRT_FILL_STACK
+fillStack:
+        ld      de, 0x5555              ; Word to fill
+        ld      b, CRT_STACK_SIZE/2     ; Stack size in words
+fillStackLoop:
+        push    de                      ; Push data to stack
+        djnz    fillStackLoop           ; Loop for all words
+        ld      sp, REGISTER_SP
+ENDIF
+        di
+        jp      _main
+
+loadBanks:
+        ;;------------------------------------------------------------------------
+        ;; B = length of filename
+        ;; HL = address of filename
+        ;; DE = 2KB ram buffer
+        ld      b, 9
+        ld      hl, files
+        call    loadBank
+
+        ld      hl, filesEnd-1
+        inc     (hl)
+
+        ld      b, 9
+        ld      hl, files
+        call    loadBank
         ret
 
+loadBank:
+        ld      de, 0xc000
+        call    cas_in_open
+        ex      de, hl                  ; load file to location stored in the file header
+        call    cas_in_direct
+        call    cas_in_close
+        ret
+files:
+        db      "sprite.b0"
+filesEnd:
+
 IF  CRT_INITIALIZE_BSS
-		;
-		; Clear the BSS sections
-		;
+	;
+	; Clear the BSS sections
+	;
 bssInit:
         ld      hl, bssTable
 nextBSSSection:
@@ -46,7 +140,7 @@ nextBSSSection:
         inc     hl
 
 	; Switch memory banks
-        call    bankSwitch
+        include "bankswitch.asm"
 
         ld      c, (hl)
         inc     hl
@@ -76,9 +170,7 @@ sectionDone:
 
 ENDIF
 
-        include "bankswitch.asm"
-
-        SECTION RODATA_1
+        SECTION RODATA
 bssTable:
 IFDEF   CRT_ORG_BANK_0
         dw      __BSS_0_head
@@ -100,7 +192,28 @@ IFDEF   CRT_ORG_BANK_3
         db      0xc0
         dw      __BSS_3_tail-__BSS_3_head
 ENDIF
+IFDEF   CRT_ORG_BANK_4
+        dw      __BSS_4_head
+        db      0xc4
+        dw      __BSS_4_tail-__BSS_4_head
+ENDIF
+IFDEF   CRT_ORG_BANK_5
+        dw      __BSS_5_head
+        db      0xc5
+        dw      __BSS_5_tail-__BSS_5_head
+ENDIF
+IFDEF   CRT_ORG_BANK_6
+        dw      __BSS_6_head
+        db      0xc6
+        dw      __BSS_6_tail-__BSS_6_head
+ENDIF
+IFDEF   CRT_ORG_BANK_7
+        dw      __BSS_7_head
+        db      0xc7
+        dw      __BSS_7_tail-__BSS_7_head
+ENDIF
         dw      0x0000
+crt0_end:
 
 		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    		; Define Memory Banks
@@ -108,7 +221,7 @@ ENDIF
 
 IFDEF   CRT_ORG_BANK_0
         SECTION BANK_0
-;        org     CRT_ORG_BANK_0
+        org     CRT_ORG_BANK_0
         SECTION CODE_0
         SECTION RODATA_0
         SECTION DATA_0

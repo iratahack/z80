@@ -1,4 +1,5 @@
-        extern  _main
+        public  _main
+        extern  border
         section CODE_0
 _main:
         ; Wait for VSYNC
@@ -10,11 +11,8 @@ wait_vsync:
         rra                             ; put bit 0 into carry flag
         jp      nc, wait_vsync          ; if carry not set, loop, otherwise continue
 
-        ; change border colour to black
-        ld      bc, 0x7F10
-        out     (c), c
-        ld      c, 0x54
-        out     (c), c
+        ld      a, 0x54
+        call    border
 
         ld      hl, 96                  ; Character row
 
