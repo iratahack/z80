@@ -24,21 +24,21 @@ BANKS= $(PROJ)_CODE.bin \
 all: $(PROJ).dsk
 
 clean:
-	rm -f *.[io] *.dsk *.bin *.run *.map *.sym *.com *.b?
+	rm -f *.[io] *.dsk *.bin *.me *.map *.sym *.com *.b?
  
 dis: $(PROJ).dsk
 	z88dk-dis -o $(HEAD) -x $(PROJ).map $(PROJ)_$(BANK).bin | less
 
 run: $(PROJ).dsk
-	caprice32.launcher $(PROJ).dsk -a run\"$(PROJ).run
+	caprice32.launcher $(PROJ).dsk -a run\"run.me
 
 $(PROJ).dsk: $(BANKS) $(DSKTOOL)
-	cp $(PROJ)_CODE.bin $(PROJ).run
+	cp $(PROJ)_CODE.bin run.me
 	cp $(PROJ)_BANK_0.bin $(PROJ).b0
 	cp $(PROJ)_BANK_1.bin $(PROJ).b1
-	$(DSKTOOL) --file $(PROJ).dsk new insert $(PROJ).run 0x200 0x200
-	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b0 0x300 0x300
-	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b1 0x4000 0x4000
+	$(DSKTOOL) --file $(PROJ).dsk new insert run.me 0x200 0x200
+	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b0
+	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b1
 
 %.bin: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $(PROJ)

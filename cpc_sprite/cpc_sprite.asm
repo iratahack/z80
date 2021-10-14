@@ -1,7 +1,13 @@
         public  _main
         extern  border
+        extern  initISR
+
+
         section CODE_0
 _main:
+        call    initISR
+
+
         ; Wait for VSYNC
         ld      b, 0xf5                 ; PPI port B input
 wait_vsync:
@@ -16,6 +22,7 @@ wait_vsync:
 
         ld      hl, 96                  ; Character row
 
+        di
         ld      (saveSP+1), sp          ; Save the stack pointer
 
         add     hl, hl                  ; Multiply by 2
@@ -37,11 +44,25 @@ nextLine:
 
 saveSP:
         ld      sp, -1
+        ei
 
+firstColor:
+        ld      hl, borderColors
+loop:
+        ld      a, (hl)
+        inc     hl
+        or      a
+        jr      z, firstColor
+        call    border
         halt
+        jp      loop
+
         ret
 
         section RODATA_0
+borderColors:
+        db      0x4c, 0x52, 0x45, 0x5a, 0x4d, 0x4a, 0x00
+
 testSprite:
         db      %00110000, %11000000
         db      %01110000, %11100000

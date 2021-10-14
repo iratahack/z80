@@ -16,6 +16,15 @@
         EXTERN  __BSS_6_tail
         EXTERN  __BSS_7_tail
 
+        EXTERN  __BANK_0_head
+        EXTERN  __BANK_1_head
+        EXTERN  __BANK_2_head
+        EXTERN  __BANK_3_head
+        EXTERN  __BANK_4_head
+        EXTERN  __BANK_5_head
+        EXTERN  __BANK_6_head
+        EXTERN  __BANK_7_head
+
         extern  _main
 
         defc    mc_start_program=0xbd16
@@ -29,6 +38,7 @@
         defc    txt_wr_char=0xbb5d
         defc    txt_clear_window=0xbb6c
         defc    bank_io_hi=0x7f
+        defc    default_map=0xc0
 
 IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
@@ -97,24 +107,24 @@ ENDIF
         call    txt_clear_window
 
         ; Enable default memory map
-        ld      bc, 0x7fc0
-        out     (c), c
+        ld      a, default_map
+        include "bankswitch.asm"
 
         di
         jp      _main
 
 loadBanks:
-        ld      hl, 0x100c
+        ld      hl, 0x100c              ; x/y cursor location
         call    txt_set_cursor
-        ld      hl, loading
+        ld      hl, loading             ; Null terminated text string
         call    puts
 
         ld      hl, bankTable
 loadNextBank:
-        ld      a, (hl)
+        ld      a, (hl)                 ; Get the file extension
         inc     hl
         or      a
-        ret     z
+        ret     z                       ; Zero signifies end of bank table
 
         ld      c, (hl)                 ; Get the bank
         inc     hl
@@ -122,6 +132,12 @@ loadNextBank:
         ; Switch memory bank
         ld      b, bank_io_hi
         out     (c), c
+
+        ; Get the load address
+        ld      e, (hl)
+        inc     hl
+        ld      d, (hl)
+        inc     hl
 
         push    hl
 
@@ -131,6 +147,7 @@ loadNextBank:
 
         ; B = length of filename
         ; HL = address of filename
+        ; DE = load address (set from the bank table)
         ld      b, fileNameEnd-fileName
         ld      hl, fileName
         call    loadBank
@@ -139,10 +156,11 @@ loadNextBank:
         jr      loadNextBank            ; On to the next bank.
 
 loadBank:
+        push    de                      ; Save load address
         ; DE = 2KB ram buffer
-        ld      de, 0xc000
+        ld      de, 0xc000              ; ISN'T THIS THE SCREEN ADDRESS?
         call    cas_in_open
-        ex      de, hl                  ; load file to location stored in the file header
+        pop     hl                      ; Restore load address
         call    cas_in_direct
         call    cas_in_close
         ret
@@ -266,34 +284,42 @@ bankTable:
 IFDEF   CRT_ORG_BANK_0
         db      '0'
         db      0xc0
+        dw      __BANK_0_head
 ENDIF
 IFDEF   CRT_ORG_BANK_1
         db      '1'
         db      0xc0
+        dw      __BANK_1_head
 ENDIF
 IFDEF   CRT_ORG_BANK_2
         db      '2'
         db      0xc0
+        dw      __BANK_2_head
 ENDIF
 IFDEF   CRT_ORG_BANK_3
         db      '3'
         db      0xc0
+        dw      __BANK_3_head
 ENDIF
 IFDEF   CRT_ORG_BANK_4
         db      '4'
         db      0xc4
+        dw      __BANK_4_head
 ENDIF
 IFDEF   CRT_ORG_BANK_5
         db      '5'
         db      0xc5
+        dw      __BANK_5_head
 ENDIF
 IFDEF   CRT_ORG_BANK_6
         db      '6'
         db      0xc6
+        dw      __BANK_6_head
 ENDIF
 IFDEF   CRT_ORG_BANK_7
         db      '7'
         db      0xc7
+        dw      __BANK_7_head
 ENDIF
         dw      0x0000
 crt0_end:
