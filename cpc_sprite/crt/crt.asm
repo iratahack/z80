@@ -25,6 +25,10 @@
         defc    cas_in_open=0xbc77
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
+        defc    txt_set_cursor=0xbb75
+        defc    txt_wr_char=0xbb5d
+        defc    txt_clear_window=0xbb6c
+        defc    bank_io_hi=0x7f
 
 IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
@@ -89,36 +93,73 @@ fillStackLoop:
         djnz    fillStackLoop           ; Loop for all words
         ld      sp, REGISTER_SP
 ENDIF
+
+        call    txt_clear_window
+
+        ; Enable default memory map
+        ld      bc, 0x7fc0
+        out     (c), c
+
         di
         jp      _main
 
 loadBanks:
-        ;;------------------------------------------------------------------------
-        ;; B = length of filename
-        ;; HL = address of filename
-        ;; DE = 2KB ram buffer
-        ld      b, 9
-        ld      hl, files
+        ld      hl, 0x100c
+        call    txt_set_cursor
+        ld      hl, loading
+        call    puts
+
+        ld      hl, bankTable
+loadNextBank:
+        ld      a, (hl)
+        inc     hl
+        or      a
+        ret     z
+
+        ld      c, (hl)                 ; Get the bank
+        inc     hl
+
+        ; Switch memory bank
+        ld      b, bank_io_hi
+        out     (c), c
+
+        push    hl
+
+        ; Update filename for this bank
+        ld      hl, fileNameEnd-1
+        ld      (hl), a
+
+        ; B = length of filename
+        ; HL = address of filename
+        ld      b, fileNameEnd-fileName
+        ld      hl, fileName
         call    loadBank
 
-        ld      hl, filesEnd-1
-        inc     (hl)
-
-        ld      b, 9
-        ld      hl, files
-        call    loadBank
-        ret
+        pop     hl
+        jr      loadNextBank            ; On to the next bank.
 
 loadBank:
+        ; DE = 2KB ram buffer
         ld      de, 0xc000
         call    cas_in_open
         ex      de, hl                  ; load file to location stored in the file header
         call    cas_in_direct
         call    cas_in_close
         ret
-files:
-        db      "sprite.b0"
-filesEnd:
+
+        ;
+        ; Display the null terminated string pointed to by hl
+        ; at the current cursor location.
+        ;
+puts:
+        ld      a, (hl)
+        inc     hl
+        or      a
+        ret     z
+        push    hl
+        call    txt_wr_char
+        pop     hl
+        jr      puts
 
 IF  CRT_INITIALIZE_BSS
 	;
@@ -171,6 +212,13 @@ sectionDone:
 ENDIF
 
         SECTION RODATA
+loading:
+        db      "Loading...", 0
+
+fileName:
+        db      "sprite.b0"
+fileNameEnd:
+
 bssTable:
 IFDEF   CRT_ORG_BANK_0
         dw      __BSS_0_head
@@ -211,6 +259,41 @@ IFDEF   CRT_ORG_BANK_7
         dw      __BSS_7_head
         db      0xc7
         dw      __BSS_7_tail-__BSS_7_head
+ENDIF
+        dw      0x0000
+
+bankTable:
+IFDEF   CRT_ORG_BANK_0
+        db      '0'
+        db      0xc0
+ENDIF
+IFDEF   CRT_ORG_BANK_1
+        db      '1'
+        db      0xc0
+ENDIF
+IFDEF   CRT_ORG_BANK_2
+        db      '2'
+        db      0xc0
+ENDIF
+IFDEF   CRT_ORG_BANK_3
+        db      '3'
+        db      0xc0
+ENDIF
+IFDEF   CRT_ORG_BANK_4
+        db      '4'
+        db      0xc4
+ENDIF
+IFDEF   CRT_ORG_BANK_5
+        db      '5'
+        db      0xc5
+ENDIF
+IFDEF   CRT_ORG_BANK_6
+        db      '6'
+        db      0xc6
+ENDIF
+IFDEF   CRT_ORG_BANK_7
+        db      '7'
+        db      0xc7
 ENDIF
         dw      0x0000
 crt0_end:
