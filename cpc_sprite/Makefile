@@ -33,12 +33,12 @@ run: $(PROJ).dsk
 
 $(PROJ).dsk: $(BANKS) $(DSKTOOL)
 	@echo "Creating $@"
+	# Add the boot loader to the disk image
 	@cp $(PROJ)_CODE.bin run.me
-	@cp $(PROJ)_BANK_0.bin $(PROJ).b0
-	@cp $(PROJ)_BANK_3.bin $(PROJ).b3
 	@$(DSKTOOL) --file $@ new insert run.me 0x100 0x100
-	@$(DSKTOOL) --file $@ insert $(PROJ).b0
-	@$(DSKTOOL) --file $@ insert $(PROJ).b3
+	# Add the banks to the disk image
+	@ls $(PROJ)_BANK_?.bin | sed -e 's/\(.*\)\(_BANK_\)\(.\).bin/\1\2\3.bin \1.b\3/g' | xargs -L 1 cp
+	@ls *.b? | xargs -L 1 $(DSKTOOL) --file $@ insert
 
 %.bin: $(OBJECTS)
 	@echo "Linking $@"
