@@ -299,6 +299,8 @@ ENDIF
 
 bankTable:
 IFDEF   CRT_ORG_BANK_3
+        ; Bank 3 loaded first as it contains
+        ; the loading screen
         db      '3'
         db      0xc0
         dw      __BANK_3_head
@@ -312,11 +314,6 @@ IFDEF   CRT_ORG_BANK_1
         db      '1'
         db      0xc0
         dw      __BANK_1_head
-ENDIF
-IFDEF   CRT_ORG_BANK_3
-        db      '3'
-        db      0xc0
-        dw      __BANK_3_head
 ENDIF
 IFDEF   CRT_ORG_BANK_4
         db      '4'
