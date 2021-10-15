@@ -33,18 +33,22 @@ run: $(PROJ).dsk
 	caprice32.launcher $(PROJ).dsk -a run\"run.me
 
 $(PROJ).dsk: $(BANKS) $(DSKTOOL)
-	cp $(PROJ)_CODE.bin run.me
-	cp $(PROJ)_BANK_0.bin $(PROJ).b0
-	cp $(PROJ)_BANK_1.bin $(PROJ).b1
-	$(DSKTOOL) --file $(PROJ).dsk new insert run.me 0x200 0x200
-	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b0
-	$(DSKTOOL) --file $(PROJ).dsk insert $(PROJ).b1
+	@echo "Creating $@"
+	@cp $(PROJ)_CODE.bin run.me
+	@cp $(PROJ)_BANK_0.bin $(PROJ).b0
+	@cp $(PROJ)_BANK_1.bin $(PROJ).b1
+	@cp title.scr $(PROJ).b3
+	@$(DSKTOOL) --file $@ new insert run.me 0x100 0x100
+	@$(DSKTOOL) --file $@ insert $(PROJ).b0
+	@$(DSKTOOL) --file $@ insert $(PROJ).b1
+	@$(DSKTOOL) --file $@ insert $(PROJ).b3
 
 %.bin: $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $(PROJ)
+	@echo "Linking $@"
+	@$(LD) $(LDFLAGS) $(OBJECTS) -o $(PROJ)
 
 %.o: %.asm
-	$(AS) $(ASFLAGS) $<
+	@$(AS) $(ASFLAGS) $<
 
 sector-cpc:
 	@git clone --depth=1 https://github.com/neuro-sys/sector-cpc.git

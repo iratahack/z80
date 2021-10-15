@@ -49,42 +49,57 @@ ENDIF
 
         SECTION CODE
         ORG     CRT_ORG_CODE
-        ;;------------------------------------------------------------------------
-        ;; store the drive number the loader was run from
+        ;------------------------------------------------------------------------
+        ; store the drive number the loader was run from
         ld      a, (current_drive)
         ld      (drive+1), a
 
-        ;;------------------------------------------------------------------------
-        ld      c, 0xff                 ;; disable all roms
-        ld      hl, crt0                ;; execution address for program
-        call    mc_start_program        ;; start it
+        ;------------------------------------------------------------------------
+        ld      c, 0xff                 ; disable all roms
+        ld      hl, crt0                ; execution address for program
+        call    mc_start_program        ; start it
 
 crt0:
-        call    kl_rom_walk             ;; enable all roms
+        ; DE = Start of ROM useable memory
+        ; HL = End of ROM useable memory
+        ld      de, 0x4000
+        ld      hl, 0x7fff
+        call    kl_rom_walk             ; enable all roms
 
-        ;;------------------------------------------------------------------------
-        ;; when AMSDOS is enabled, the drive reverts back to drive 0!
-        ;; This will restore the drive number to the drive the loader was run from
+        ;------------------------------------------------------------------------
+        ; when AMSDOS is enabled, the drive reverts back to drive 0!
+        ; This will restore the drive number to the drive the loader was run from
 drive:
         ld      a, -1
         ld      (current_drive), a
 
-        ;;------------------------------------------------------------------------
-        ;; set screen mode 1
-
+        ;------------------------------------------------------------------------
+        ; set screen mode 1
         ld      a, 1
         call    scr_set_mode
 
-        di
-
-IFDEF   REGISTER_SP
-        ld      sp, REGISTER_SP
-ENDIF
-
+        ;------------------------------------------------------------------------
+        ; load all memory banks from disk
         call    loadBanks
+
+        ;------------------------------------------------------------------------
+        ; clear the screen
+        call    txt_clear_window
+
+        ;------------------------------------------------------------------------
+        ; No more BIOS calls from here!!!
+        di
 
 IF  CRT_INITIALIZE_BSS
         call    bssInit
+ENDIF
+
+        ; Enable default memory map
+        ld      a, default_map
+        include "bankswitch.asm"
+
+IFDEF   REGISTER_SP
+        ld      sp, REGISTER_SP
 ENDIF
 
         ;
@@ -96,21 +111,23 @@ ENDIF
         ;
 IF  CRT_FILL_STACK
 fillStack:
+        ld      (stackSave+1), sp
         ld      de, 0x5555              ; Word to fill
         ld      b, CRT_STACK_SIZE/2     ; Stack size in words
 fillStackLoop:
         push    de                      ; Push data to stack
         djnz    fillStackLoop           ; Loop for all words
-        ld      sp, REGISTER_SP
+stackSave:
+        ld      sp, -1
 ENDIF
 
-        call    txt_clear_window
+        ; Clear the RST addresses
+        ld      hl, 0x0000
+        ld      (hl), 0x00
+        ld      de, 0x0001
+        ld      bc, 0x3f
+        ldir
 
-        ; Enable default memory map
-        ld      a, default_map
-        include "bankswitch.asm"
-
-        di
         jp      _main
 
 loadBanks:
@@ -281,6 +298,11 @@ ENDIF
         dw      0x0000
 
 bankTable:
+IFDEF   CRT_ORG_BANK_3
+        db      '3'
+        db      0xc0
+        dw      __BANK_3_head
+ENDIF
 IFDEF   CRT_ORG_BANK_0
         db      '0'
         db      0xc0
@@ -290,11 +312,6 @@ IFDEF   CRT_ORG_BANK_1
         db      '1'
         db      0xc0
         dw      __BANK_1_head
-ENDIF
-IFDEF   CRT_ORG_BANK_2
-        db      '2'
-        db      0xc0
-        dw      __BANK_2_head
 ENDIF
 IFDEF   CRT_ORG_BANK_3
         db      '3'
@@ -320,6 +337,13 @@ IFDEF   CRT_ORG_BANK_7
         db      '7'
         db      0xc7
         dw      __BANK_7_head
+ENDIF
+IFDEF   CRT_ORG_BANK_2
+        ; Bank 2 loaded last as it will overwrite
+        ; RAM used by the ROM's
+        db      '2'
+        db      0xc0
+        dw      __BANK_2_head
 ENDIF
         dw      0x0000
 crt0_end:
