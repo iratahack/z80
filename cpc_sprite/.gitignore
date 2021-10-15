@@ -1,0 +1,7 @@
+*.i
+*.o
+*.map
+*.me
+*.b?
+tools
+sector-cpc
