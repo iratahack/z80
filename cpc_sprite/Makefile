@@ -16,8 +16,7 @@ BANK ?= BANK_0
 HEAD=$(shell grep __$(BANK)_head *.map | awk '{gsub("^.", "0x", $$3); print $$3}')
 
 BANKS= $(PROJ)_CODE.bin \
-		$(PROJ)_BANK_0.bin \
-		$(PROJ)_BANK_1.bin
+		$(PROJ)_BANK_0.bin
 
 .PHONY: all clean run dis
 
@@ -36,11 +35,9 @@ $(PROJ).dsk: $(BANKS) $(DSKTOOL)
 	@echo "Creating $@"
 	@cp $(PROJ)_CODE.bin run.me
 	@cp $(PROJ)_BANK_0.bin $(PROJ).b0
-	@cp $(PROJ)_BANK_1.bin $(PROJ).b1
 	@cp title.scr $(PROJ).b3
 	@$(DSKTOOL) --file $@ new insert run.me 0x100 0x100
 	@$(DSKTOOL) --file $@ insert $(PROJ).b0
-	@$(DSKTOOL) --file $@ insert $(PROJ).b1
 	@$(DSKTOOL) --file $@ insert $(PROJ).b3
 
 %.bin: $(OBJECTS)

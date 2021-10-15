@@ -1,5 +1,5 @@
         public  border
-        section CODE_1
+        section CODE_0
 border:
         push    bc
         ld      bc, 0x7F10
