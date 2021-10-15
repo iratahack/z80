@@ -35,7 +35,7 @@
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
         defc    txt_set_cursor=0xbb75
-        defc    txt_wr_char=0xbb5d
+        defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
         defc    bank_io_hi=0x7f
         defc    default_map=0xc0
@@ -191,9 +191,7 @@ puts:
         inc     hl
         or      a
         ret     z
-        push    hl
-        call    txt_wr_char
-        pop     hl
+        call    txt_output
         jr      puts
 
 IF  CRT_INITIALIZE_BSS
