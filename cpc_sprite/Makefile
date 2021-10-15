@@ -18,13 +18,17 @@ HEAD=$(shell grep __$(BANK)_head *.map | awk '{gsub("^.", "0x", $$3); print $$3}
 BANKS= $(PROJ)_CODE.bin \
 		$(PROJ)_BANK_0.bin
 
-.PHONY: all clean run dis
+.PHONY: all clean run dis distclean
 
 all: $(PROJ).dsk
 
 clean:
 	rm -f *.[io] *.dsk *.bin *.me *.map *.sym *.com *.b?
  
+distclean: clean
+	rm -rf sector-cpc
+	rm -rf tools
+
 dis: $(PROJ).dsk
 	z88dk-dis -o $(HEAD) -x $(PROJ).map $(PROJ)_$(BANK).bin | less
 
