@@ -351,7 +351,9 @@ crt0_end:
 
 IFDEF   CRT_ORG_BANK_0
         SECTION BANK_0
-        org     CRT_ORG_BANK_0
+;        org     CRT_ORG_BANK_0
+; Code BANK_0 follows on from the loader
+        org     -1
         SECTION CODE_0
         SECTION RODATA_0
         SECTION DATA_0
