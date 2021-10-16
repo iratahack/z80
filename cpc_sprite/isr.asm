@@ -2,15 +2,15 @@
         public  ticks
 
         defc    JP_OPCODE=0xc3
-        defc    RST_38=0x38
+        defc    RST_7=0x38
 
         section CODE_0
 initISR:
         ld      a, JP_OPCODE            ; Store the opcode for JP
-        ld      (RST_38), a
+        ld      (RST_7), a
 
         ld      de, isr                 ; Store the jump address which is the address of the
-        ld      (RST_38+1), de
+        ld      (RST_7+1), de
 
         im      1                       ; Enable interrupt mode 1
         ei                              ; Enable interrupts
