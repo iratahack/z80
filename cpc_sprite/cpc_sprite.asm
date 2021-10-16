@@ -7,18 +7,7 @@
 _main:
         call    initISR
 
-
-        ; Wait for VSYNC
-        ld      b, 0xf5                 ; PPI port B input
-wait_vsync:
-        in      a, (c)                  ; read PPI port B input
-                                        ; (bit 0 = "1" if vsync is active,
-                                        ;  or bit 0 = "0" if vsync is in-active)
-        rra                             ; put bit 0 into carry flag
-        jp      nc, wait_vsync          ; if carry not set, loop, otherwise continue
-
-        ld      a, 0x54
-        call    border
+        call    clearScreen
 
         ld      hl, 96                  ; Character row
 
@@ -35,8 +24,8 @@ wait_vsync:
 
 nextLine:
         pop     de                      ; Pop screen pixel row address
-        ld      a, 40
-        add     a, e
+		ld		a, e
+        add     a, 40
         ld      e, a
         ldi
         ldi
@@ -50,12 +39,48 @@ firstColor:
         ld      hl, borderColors
 loop:
         ld      a, (hl)
-        inc     hl
         or      a
         jr      z, firstColor
         call    border
         halt
+        inc     hl
         jp      loop
+
+        ret
+
+clearScreen:
+        di
+
+        call    vsync
+
+        ld      (clsSP+1), sp
+        ld      sp, 0
+        ld      bc, 0x4000/8
+        ld      hl, 0x0000
+clsLoop:
+        push    hl
+        push    hl
+        push    hl
+        push    hl
+        dec     bc
+        ld      a, b
+        or      c
+        jr      nz, clsLoop
+clsSP:
+        ld      sp, -1
+
+        ei
+        ret
+
+        ; Wait for VSYNC
+vsync:
+        ld      b, 0xf5                 ; PPI port B input
+wait_vsync:
+        in      a, (c)                  ; read PPI port B input
+                                        ; (bit 0 = "1" if vsync is active,
+                                        ;  or bit 0 = "0" if vsync is in-active)
+        rra                             ; put bit 0 into carry flag
+        jp      nc, wait_vsync          ; if carry not set, loop, otherwise continue
 
         ret
 
@@ -66,7 +91,7 @@ borderColors:
 testSprite:
         db      %00110000, %11000000
         db      %01110000, %11100000
-        db      %11110010, %11110100
+        db      %11010000, %10110000
         db      %11110000, %11110000
         db      %11110000, %11110000
         db      %11010010, %10110100

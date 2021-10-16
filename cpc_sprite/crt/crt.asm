@@ -37,7 +37,9 @@
         defc    txt_set_cursor=0xbb75
         defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
-        defc    bank_io_hi=0x7f
+        defc    scr_set_ink=0xbc32
+		defc	scr_set_border=0xbc38
+		defc    bank_io_hi=0x7f
         defc    default_map=0xc0
 
 IFNDEF  CRT_INITIALIZE_BSS
@@ -78,13 +80,12 @@ drive:
         ld      a, 1
         call    scr_set_mode
 
+        call    setPalette
+		ld		bc, 0x0000
+		call	scr_set_border
         ;------------------------------------------------------------------------
         ; load all memory banks from disk
         call    loadBanks
-
-        ;------------------------------------------------------------------------
-        ; clear the screen
-        call    txt_clear_window
 
         ;------------------------------------------------------------------------
         ; No more BIOS calls from here!!!
@@ -194,6 +195,30 @@ puts:
         call    txt_output
         jr      puts
 
+setPalette:
+        ld      hl, palette
+        xor     a
+
+nextPen:
+        ld      b, (hl)
+        inc     b                       ; If b = 0 after inc end of list
+        ret     z
+        dec     b                       ; Restore b
+
+        ld      c, b
+
+        push    hl
+        push    af
+
+        call    scr_set_ink
+
+        pop     af
+        pop     hl
+
+        inc     hl
+        inc     a
+        jp      nextPen
+
 IF  CRT_INITIALIZE_BSS
 	;
 	; Clear the BSS sections
@@ -213,7 +238,7 @@ nextBSSSection:
         ld      a, (hl)                 ; Get the bank
         inc     hl
 
-	; Switch memory banks
+        ; Switch memory banks
         include "bankswitch.asm"
 
         ld      c, (hl)
@@ -245,6 +270,9 @@ sectionDone:
 ENDIF
 
         SECTION RODATA
+palette:
+        db      0x00, 0x18, 0x02, 0x1a, 0xff
+
 loading:
         db      "Loading...", 0
 
