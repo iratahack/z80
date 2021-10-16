@@ -38,8 +38,8 @@
         defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
         defc    scr_set_ink=0xbc32
-		defc	scr_set_border=0xbc38
-		defc    bank_io_hi=0x7f
+        defc    scr_set_border=0xbc38
+        defc    bank_io_hi=0x7f
         defc    default_map=0xc0
 
 IFNDEF  CRT_INITIALIZE_BSS
@@ -81,8 +81,8 @@ drive:
         call    scr_set_mode
 
         call    setPalette
-		ld		bc, 0x0000
-		call	scr_set_border
+        ld      bc, 0x0000
+        call    scr_set_border
         ;------------------------------------------------------------------------
         ; load all memory banks from disk
         call    loadBanks
