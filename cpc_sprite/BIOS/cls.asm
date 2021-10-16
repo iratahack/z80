@@ -1,8 +1,6 @@
         public  cls
 
         extern  vsync
-
-        section CODE_0
 cls:
         di
 

@@ -4,8 +4,6 @@
         extern  screenTab
         extern  font
 
-        section CODE_0
-
         ; HL = Pointer to null terminated string to output
         ; B  = Column
         ; C  = Row

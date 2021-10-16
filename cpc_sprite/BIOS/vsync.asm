@@ -1,6 +1,5 @@
         public  vsync
 
-        section CODE_0
         ; Wait for VSYNC
 vsync:
         ld      b, 0xf5                 ; PPI port B input
