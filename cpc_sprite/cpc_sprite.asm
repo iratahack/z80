@@ -1,6 +1,10 @@
         public  _main
+        public  screenTab
+
         extern  border
         extern  initISR
+        extern  putc
+        extern  puts
 
 
         section CODE_0
@@ -8,6 +12,10 @@ _main:
         call    initISR
 
         call    clearScreen
+
+        ld      hl, string
+        ld      bc, 0x0d0c
+        call    puts
 
         ld      hl, 96                  ; Character row
 
@@ -24,7 +32,7 @@ _main:
 
 nextLine:
         pop     de                      ; Pop screen pixel row address
-		ld		a, e
+        ld      a, e
         add     a, 40
         ld      e, a
         ldi
@@ -85,6 +93,9 @@ wait_vsync:
         ret
 
         section RODATA_0
+string:
+        db      "Craig waz ear!", 0
+
 borderColors:
         db      0x4c, 0x52, 0x45, 0x5a, 0x4d, 0x4a, 0x00
 
