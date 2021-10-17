@@ -35,6 +35,11 @@ dis: $(PROJ).dsk
 run: $(PROJ).dsk
 	caprice32.launcher $(PROJ).dsk -a run\"run.me
 
+ifeq (,$(findstring $(MAKECMDGOALS),clean))
+%.d: %.asm
+	@./mkdep.sh $< > $@
+endif
+
 $(PROJ).dsk: $(BANKS) $(DSKTOOL)
 	@echo "Creating $@"
 	# Add the boot loader to the disk image
@@ -60,3 +65,6 @@ $(DSKTOOL): sector-cpc
 	@cmake -S sector-cpc -B sector-cpc/build
 	@cmake --build sector-cpc/build
 	@install -v sector-cpc/build/sector-cpc tools
+
+-include $(ASMSRC:.asm=.d)
+	
