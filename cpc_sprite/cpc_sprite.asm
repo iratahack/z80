@@ -3,8 +3,10 @@
         extern  border
         extern  initISR
         extern  puts
+        extern  putc
         extern  cls
         extern  screenTab
+        extern  scanKeyboard
 
 
         section CODE_0
@@ -16,6 +18,27 @@ _main:
         ld      hl, string
         ld      bc, 0x0d0c
         call    puts
+
+        ld      bc, 0x0000
+ttt:
+        push    bc
+wait:
+        call    scanKeyboard
+        jr      z, wait
+
+        pop     bc
+        push    bc
+        call    putc
+
+        ; Key pressed, now wait for release
+wait2:
+        call    scanKeyboard
+        jr      nz, wait2
+
+        pop     bc
+        inc     b
+        jp      ttt
+
 
         ld      hl, 96                  ; Character row
 
