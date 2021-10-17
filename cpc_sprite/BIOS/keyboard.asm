@@ -54,7 +54,7 @@ nextRow:
 
         ld      b, 8
 nextKey:
-       rrca
+        rrca
         jr      nc, keyDetected
         inc     hl
         djnz    nextKey

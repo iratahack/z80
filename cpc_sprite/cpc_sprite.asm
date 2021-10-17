@@ -17,6 +17,7 @@ _main:
 
         ld      hl, string
         ld      bc, 0x0d0c
+        ld      e, 1
         call    puts
 
         ld      bc, 0x0000
@@ -28,6 +29,7 @@ wait:
 
         pop     bc
         push    bc
+        ld      e, 3
         call    putc
 
         ; Key pressed, now wait for release

@@ -4,27 +4,46 @@
         extern  screenTab
         extern  font
 
-        ; HL = Pointer to null terminated string to output
-        ; B  = Column
-        ; C  = Row
+        ;
+        ; Display a string.
+        ;
+        ; Entry:
+        ;   HL = Pointer to null terminated string to output
+        ;   B = Column
+        ;   C = Row
+        ;   E = Pen
 puts:
         ld      a, (hl)
         inc     hl
         or      a
         ret     z
 
-        push    hl
         push    bc
+        push    de
+        push    hl
 
         call    putc
 
-        pop     bc
         pop     hl
+        pop     de
+        pop     bc
 
         inc     b
         jp      puts
 
+        ;
+        ; Display a character
+        ;
+        ; Entry:
+        ;   A = Character to display
+        ;   B = Column
+        ;   C = Row
+        ;   E = Pen
 putc:
+        ld      IX, mode1PenMask
+        ld      d, 0x00
+        add     IX, de
+
         sub     ' '
         ld      l, a
         ld      h, 0
@@ -57,27 +76,44 @@ putc:
 
         ld      b, 8
 nextByte:
-        ld      c, (hl)
-        inc     hl
+        ld      a, (hl)                 ; Get byte of font data
+        and     0xf0                    ; Mask off lower nibble
+        ld      c, a                    ; Save upper nibble
+        rrca                            ; Move upper nibble to lower nibble
+        rrca
+        rrca
+        rrca
+        or      c                       ; Or upper nibble back in
+;        and     0xf0                    ; Mask to switch pen color
+        and     (IX+0)
+        ld      (de), a                 ; Write to the screen
+        inc     e                       ; Next screen address
 
-        ld      a, c
-        rrca
-        rrca
-        rrca
-        rrca
-        and     %00001111
-        ld      (de), a
-        inc     e
-        ld      a, c
-        and     %00001111
-        ld      (de), a
-        dec     e
+        ld      a, (hl)                 ; Get byte of font data
+        and     0x0f                    ; Mask off upper nibble
+        ld      c, a                    ; Save lower nibble
+        rlca                            ; Move lower nibble to upper nibble
+        rlca
+        rlca
+        rlca
+        or      c                       ; Or lower nibble back in
+;        and     0xf0                    ; Mask to switch pen color
+        and     (IX+0)
+        ld      (de), a                 ; Write to the screen
 
+        dec     e                       ; Previous screen address
         ; Next screen line down
         ld      a, 0x08
         add     d
         ld      d, a
 
+        inc     hl                      ; Next byte of font data
         djnz    nextByte
 
         ret
+
+mode1PenMask:
+        db      0x00                    ; Pen 0
+        db      0x0f                    ; Pen 1
+        db      0xf0                    ; Pen 2
+        db      0xff                    ; Pen 3
