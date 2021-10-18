@@ -4,6 +4,8 @@
 
         extern  screenTab
         extern  font
+        extern  cursorPos
+        extern  mode1PenMask
 
         ;
         ; Set the text cursor location.
@@ -126,11 +128,3 @@ nextByte:
         djnz    nextByte
 
         ret
-
-mode1PenMask:
-        db      0x00                    ; Pen 0
-        db      0x0f                    ; Pen 1
-        db      0xf0                    ; Pen 2
-        db      0xff                    ; Pen 3
-cursorPos:
-        ds      2, 0
