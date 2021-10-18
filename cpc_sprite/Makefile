@@ -4,7 +4,7 @@ PROJ=sprite
 PRAGMA_FILE=zpragma.inc
 DSKTOOL=tools/sector-cpc
 
-ASMSRC=$(wildcard *.asm)
+ASMSRC=$(wildcard *.asm) $(wildcard BIOS/*.asm)
 OBJECTS=$(ASMSRC:.asm=.o)
 
 LDFLAGS= +cpc -crt0 crt/crt.asm -m -pragma-include:$(PRAGMA_FILE)
@@ -23,7 +23,8 @@ BANKS= $(PROJ)_CODE.bin \
 all: $(PROJ).dsk
 
 clean:
-	rm -f *.[iod] *.dsk *.bin *.me *.map *.sym *.com *.b?
+	rm -f *.[iod] *.dsk *.bin *.me *.map *.sym *.com *.b? *.err
+	rm -f BIOS/*.[iod] BIOS/*.err
  
 distclean: clean
 	rm -rf sector-cpc

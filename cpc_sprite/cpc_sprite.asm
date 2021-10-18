@@ -29,11 +29,15 @@ waitForKey:
         call    scanKeyboard
         jr      z, waitForKey
 
+        cp      13
+        jr      z, inputDone
+
         ld      e, 3
         call    putc
 
         jp      waitForKey
 
+inputDone:
 
         ld      hl, 96                  ; Character row
 

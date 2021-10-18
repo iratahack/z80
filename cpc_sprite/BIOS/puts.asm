@@ -1,12 +1,45 @@
+        include "BIOS/macros.inc"
+
         public  puts
         public  putc
         public  setCursor
 
         extern  screenTab
         extern  font
-        extern  cursorPos
-        extern  mode1PenMask
 
+        section CODE_0
+
+        ;
+        ; Update the cursor to the next character position.
+        ;
+        ; Increment the cursor X position, if the cursor hits the
+        ; right edge of the screen is is set to 0 and the Y position
+        ; is incremented. If the Y position hits the bottom of the
+        ; screen it is reset to 0.
+        ;
+        ; Entry:
+        ;   B = Column
+        ;   C = Row
+        ;
+        ; Exit:
+        ;   B = New column position
+        ;   C = New row position
+        ;   A = Corrupted
+updateCursor:
+        ld      a, b
+        cp      39                      ; Screen character width in mode 1
+        jr      nz, nextCol
+        ld      b, 0                    ; Reset to left size of screen
+        ld      a, c
+        cp      24                      ; screen character height in mode 1
+        jr      nz, nextRow
+        ld      c, 0
+        jr      setCursor
+nextRow:
+        inc     c                       ;
+        jr      setCursor
+nextCol:
+        inc     b
         ;
         ; Set the text cursor location.
         ;
@@ -82,16 +115,7 @@ putc:
 
         addde
 
-        ld      a, b
-        cp      39                      ; Screen character width in mode 1
-        jr      nz, nextCharPos
-        ld      b, 0
-        inc     c
-        jr      saveCursor
-nextCharPos:
-        inc     b
-saveCursor:
-        ld      (cursorPos), bc
+        call    updateCursor
 
         pop     hl
 
@@ -131,3 +155,14 @@ nextByte:
         djnz    nextByte
 
         ret
+
+        section RODATA_0
+mode1PenMask:
+        db      0x00                    ; Pen 0
+        db      0x0f                    ; Pen 1
+        db      0xf0                    ; Pen 2
+        db      0xff                    ; Pen 3
+
+        section BSS_0
+cursorPos:
+        ds      2

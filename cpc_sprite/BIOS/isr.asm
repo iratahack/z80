@@ -1,9 +1,9 @@
         public  initISR
-        public  ticks
 
         defc    JP_OPCODE=0xc3
         defc    RST_7=0x38
 
+        section CODE_0
 initISR:
         ld      a, JP_OPCODE            ; Store the opcode for JP
         ld      (RST_7), a
@@ -38,3 +38,7 @@ isr:
         pop     af                      ; Restore the registers we used
         ei                              ; Enable interrupts
         reti                            ; Acknowledge and return from interrupt
+
+        section BSS_0
+ticks:
+        ds      1

@@ -1,6 +1,12 @@
         public  vsync
 
+        section CODE_0
+
         ; Wait for VSYNC
+        ;
+        ; Exit:
+        ;   AF, B are currupted.
+        ;
 vsync:
         ld      b, 0xf5                 ; PPI port B input
 wait_vsync:

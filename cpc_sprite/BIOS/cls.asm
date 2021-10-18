@@ -1,6 +1,16 @@
         public  cls
 
         extern  vsync
+
+        section CODE_0
+
+        ;
+        ; Clear the screen.
+        ;
+        ; The screen is cleared by writing 0 to screen memory.
+        ;
+        ; Exit:
+        ;   AF, BC, HL are corrupted.
 cls:
         di
 
