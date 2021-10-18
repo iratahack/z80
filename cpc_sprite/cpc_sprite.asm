@@ -7,6 +7,7 @@
         extern  cls
         extern  screenTab
         extern  scanKeyboard
+        extern  setCursor
 
 
         section CODE_0
@@ -15,26 +16,23 @@ _main:
 
         call    cls
 
-        ld      hl, string
         ld      bc, 0x0d0c
+        call    setCursor
+
+        ld      hl, string
         ld      e, 1
         call    puts
 
         ld      bc, 0x0000
-ttt:
-        push    bc
-wait:
+        call    setCursor
+waitForKey:
         call    scanKeyboard
-        jr      z, wait
+        jr      z, waitForKey
 
-        pop     bc
-        push    bc
         ld      e, 3
         call    putc
 
-        pop     bc
-        inc     b
-        jp      ttt
+        jp      waitForKey
 
 
         ld      hl, 96                  ; Character row

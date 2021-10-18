@@ -1,3 +1,5 @@
+        include "BIOS/macros.inc"
+
         section CODE_0
         include "BIOS/cls.asm"
         include "BIOS/puts.asm"

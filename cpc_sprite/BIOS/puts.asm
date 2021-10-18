@@ -1,16 +1,25 @@
         public  puts
         public  putc
+        public  setCursor
 
         extern  screenTab
         extern  font
+
+        ;
+        ; Set the text cursor location.
+        ;
+        ; Entry:
+        ;   B = Column
+        ;   C = Row
+setCursor:
+        ld      (cursorPos), bc
+        ret
 
         ;
         ; Display a string.
         ;
         ; Entry:
         ;   HL = Pointer to null terminated string to output
-        ;   B = Column
-        ;   C = Row
         ;   E = Pen
 puts:
         ld      a, (hl)
@@ -18,7 +27,6 @@ puts:
         or      a
         ret     z
 
-        push    bc
         push    de
         push    hl
 
@@ -26,9 +34,7 @@ puts:
 
         pop     hl
         pop     de
-        pop     bc
 
-        inc     b
         jp      puts
 
         ;
@@ -36,8 +42,6 @@ puts:
         ;
         ; Entry:
         ;   A = Character to display
-        ;   B = Column
-        ;   C = Row
         ;   E = Pen
 putc:
         ld      IX, mode1PenMask
@@ -55,6 +59,7 @@ putc:
 
         push    hl
 
+        ld      bc, (cursorPos)
         ld      de, screenTab
         ld      l, c
         ld      h, 0
@@ -68,9 +73,20 @@ putc:
         ld      d, (hl)
 
         ld      a, b
-        add     a
-        add     e
-        ld      e, a
+        add     a                       ; x2 since 2 bytes per char in mode 1
+
+        addde
+
+        ld      a, b
+        cp      39                      ; Screen character width in mode 1
+        jr      nz, nextCharPos
+        ld      b, 0
+        inc     c
+        jr      saveCursor
+nextCharPos:
+        inc     b
+saveCursor:
+        ld      (cursorPos), bc
 
         pop     hl
 
@@ -116,3 +132,5 @@ mode1PenMask:
         db      0x0f                    ; Pen 1
         db      0xf0                    ; Pen 2
         db      0xff                    ; Pen 3
+cursorPos:
+        ds      2, 0
