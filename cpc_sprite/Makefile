@@ -23,7 +23,7 @@ BANKS= $(PROJ)_CODE.bin \
 all: $(PROJ).dsk
 
 clean:
-	rm -f *.[io] *.dsk *.bin *.me *.map *.sym *.com *.b?
+	rm -f *.[iod] *.dsk *.bin *.me *.map *.sym *.com *.b?
  
 distclean: clean
 	rm -rf sector-cpc
