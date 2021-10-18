@@ -46,6 +46,9 @@ puts:
         ;   A = Character to display
         ;   E = Pen
 putc:
+        cp      ' '
+        ret     c
+
         ld      IX, mode1PenMask
         ld      d, 0x00
         add     IX, de
