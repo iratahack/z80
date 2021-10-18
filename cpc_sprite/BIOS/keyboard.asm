@@ -2,6 +2,7 @@
         public  scanKeyboard
 
         extern  keyTab
+        extern  lastKeyPoll
         ;
         ; Scan the keyboard and return the ASCII code for the
         ; first key detected as pressed.
@@ -40,9 +41,8 @@ scanKeyboard:
         out     (c), c
 
         ld      c, 0x40
-        ld      d, 0x4a
-        ld      hl, keyTab
-
+        ld      de, keyTab
+        ld      hl, lastKeyPoll
 nextRow:
         ; Select keyboard row by writing to port C
         ld      b, 0xf6                 ; Keyboard rows are 0x40 - 0x49
@@ -52,20 +52,29 @@ nextRow:
         ld      b, 0xf4
         in      a, (c)
 
+        cpl                             ; Invert input, so a 1 is a key press
+        ld      b, a                    ; Save the row scan
+        xor     (hl)                    ; xor with the last value read for this row
+        and     b                       ; and with row scan. We are only interested in
+                                        ; keys being pressed.
+        ld      (hl), b                 ; Save the row scan for next time
+
         ld      b, 8
 nextKey:
         rrca
-        jr      nc, keyDetected
-        inc     hl
+        jr      c, keyDetected
+        inc     de
         djnz    nextKey
+
+        inc     hl
 
         inc     c
         ld      a, c
-        cp      d
+        cp      0x4a
         jr      nz, nextRow
 
 keyDetected:
-        ld      a, (hl)
+        ld      a, (de)
         or      a
         ei
         ret

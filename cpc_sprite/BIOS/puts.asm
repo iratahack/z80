@@ -84,9 +84,9 @@ nextByte:
         rrca
         rrca
         or      c                       ; Or upper nibble back in
-;        and     0xf0                    ; Mask to switch pen color
-        and     (IX+0)
+        and     (IX+0)                  ; Pen mask
         ld      (de), a                 ; Write to the screen
+
         inc     e                       ; Next screen address
 
         ld      a, (hl)                 ; Get byte of font data
@@ -97,8 +97,7 @@ nextByte:
         rlca
         rlca
         or      c                       ; Or lower nibble back in
-;        and     0xf0                    ; Mask to switch pen color
-        and     (IX+0)
+        and     (IX+0)                  ; Pen mask
         ld      (de), a                 ; Write to the screen
 
         dec     e                       ; Previous screen address

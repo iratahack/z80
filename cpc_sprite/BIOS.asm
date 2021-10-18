@@ -14,3 +14,5 @@
         section BSS_0
 ticks:
         ds      1
+lastKeyPoll:
+        defs    10

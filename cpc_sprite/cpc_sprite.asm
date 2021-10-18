@@ -32,11 +32,6 @@ wait:
         ld      e, 3
         call    putc
 
-        ; Key pressed, now wait for release
-wait2:
-        call    scanKeyboard
-        jr      nz, wait2
-
         pop     bc
         inc     b
         jp      ttt
