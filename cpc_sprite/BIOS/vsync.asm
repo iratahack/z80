@@ -15,5 +15,5 @@ wait_vsync:
                                         ;  or bit 0 = "0" if vsync is in-active)
         rra                             ; put bit 0 into carry flag
         jp      nc, wait_vsync          ; if carry not set, loop, otherwise continue
-
+        halt
         ret

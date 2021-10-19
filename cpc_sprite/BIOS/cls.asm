@@ -12,9 +12,9 @@
         ; Exit:
         ;   AF, BC, HL are corrupted.
 cls:
-        di
-
         call    vsync
+
+        di
 
         ld      (clsSP+1), sp
         ld      sp, 0
