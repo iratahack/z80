@@ -8,11 +8,15 @@
         extern  screenTab
         extern  scanKeyboard
         extern  setCursor
+        extern  setMode
 
 
         section CODE_0
 _main:
         call    initISR
+
+        ld      a, 1
+        call    setMode
 
         call    cls
 
