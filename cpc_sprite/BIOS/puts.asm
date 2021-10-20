@@ -162,7 +162,7 @@ IF  0
         and     (IX+0)                  ; [19] Pen mask
         ld      (de), a                 ; [7] Write to the screen
 ELSE
-IFDEF MODE1
+  IFDEF MODE1
         push    bc                      ; [11]
 
         ld      b, 2                    ; [7]
@@ -192,7 +192,7 @@ noPixel:
 
         pop     bc                      ; [10]
         dec     e
-ELIFDEF   MODE0
+  ELIFDEF   MODE0
 
         push    bc                      ; [11]
 
@@ -226,7 +226,7 @@ noPixel:
         dec     e
         dec     e
         dec     e
-ENDIF
+  ENDIF
 
 ENDIF
         dec     e                       ; Previous screen address

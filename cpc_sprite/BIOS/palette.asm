@@ -1,7 +1,9 @@
-		include "BIOS/macros.inc"
+        include "BIOS/macros.inc"
         public  initPalette
         public  flashInk
         extern  palettes
+
+        defc    NUM_PENS=0x11
 
         section CODE_0
 initPalette:
@@ -12,6 +14,17 @@ initPalette:
         ei
         ret
 
+        ; Alternate between the two palettes
+        ;
+        ; Exit:
+        ;   A, B, C, HL are corrupted.
+flashInk:
+        ld      a, (index)
+        xor     1
+        ld      (index), a
+        ld      hl, (palettes)
+        jr      z, setPalette
+        ld      hl, (palettes+2)
         ; Set all 16 colors of the palette
         ;
         ; Entry:
@@ -26,8 +39,8 @@ nextPen:
         call    setInk
         inc     hl
         inc     a
-        cp      0x10
-        jr      nz, nextPen
+        cp      NUM_PENS
+        jr      c, nextPen
 
         ret
 
@@ -44,19 +57,6 @@ setInk:
         out     (c), a
         out     (c), c
         ret
-
-        ; Alternate between the two palettes
-        ;
-        ; Exit:
-        ;   A, B, C, HL are corrupted.
-flashInk:
-        ld      a, (index)
-        xor     1
-        ld      (index), a
-        ld      hl, (palettes)
-        jr      z, setPalette
-        ld      hl, (palettes+2)
-        jr      setPalette
 
         section BSS_0
 index:
