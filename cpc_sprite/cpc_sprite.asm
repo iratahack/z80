@@ -9,7 +9,6 @@
         extern  setCursor
         extern  setMode
         extern  initPalette
-        extern  border
 
         section CODE_0
 _main:
@@ -23,9 +22,6 @@ _main:
         ld      hl, palette0
         ld      de, palette1
         call    initPalette
-
-        ld      bc, 0x4444
-        call    border
 
         ld      bc, 0x030c
         call    setCursor
