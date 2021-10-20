@@ -1,7 +1,9 @@
         public  initISR
+        extern  flashInk
 
         defc    JP_OPCODE=0xc3
         defc    RST_7=0x38
+        defc    FLASH_SPEED=0x0c
 
         section CODE_0
 initISR:
@@ -27,9 +29,30 @@ isr:
         ;
         ; Increment the 8-bit ticks count
         ;
-        ld      hl, ticks
+        ld      hl, fastTick
+nextByte:
         inc     (hl)
+        inc     hl
+        jr      z, nextByte
 
+        ; check for vsync
+        ld      b, 0xf5
+        in      a, (c)
+        rra
+        jr      nc, noVsync
+
+        ld      a, (flashCount)
+        inc     a
+        cp      FLASH_SPEED
+        jr      nz, noFlash
+
+        call    flashInk
+
+        xor     a
+noFlash:
+        ld      (flashCount), a
+
+noVsync:
         pop     iy
         pop     ix
         pop     hl
@@ -40,5 +63,7 @@ isr:
         reti                            ; Acknowledge and return from interrupt
 
         section BSS_0
-ticks:
-        ds      1
+flashCount:
+        db      0
+fastTick:
+        ds      5                       ; Enough bits for 15 years at 1/300

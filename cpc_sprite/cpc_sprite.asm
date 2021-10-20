@@ -9,27 +9,32 @@
         extern  scanKeyboard
         extern  setCursor
         extern  setMode
-
+        extern  initPalette
 
         section CODE_0
 _main:
         call    initISR
 
-        ld      a, 1
-        call    setMode
-
         call    cls
 
-        ld      bc, 0x0d0c
+        ld      a, 0
+        call    setMode
+
+        ld      hl, palette0
+        ld      de, palette1
+        call    initPalette
+
+        ld      bc, 0x030c
         call    setCursor
 
         ld      hl, string
-        ld      e, 1
+        ld      e, 0x0e
         call    puts
 
         ld      bc, 0x0000
         call    setCursor
 waitForKey:
+        halt
         call    scanKeyboard
         jr      z, waitForKey
 
@@ -103,3 +108,10 @@ testSprite:
         db      %11010010, %10110100
         db      %01100001, %01101000
         db      %00110000, %11000000
+
+palette0:
+        db      0x44, 0x4a, 0x53, 0x4c, 0x4b, 0x54, 0x55, 0x4d
+        db      0x46, 0x5e, 0x5f, 0x47, 0x52, 0x59, 0x44, 0x57
+palette1:
+        db      0x44, 0x4a, 0x53, 0x4c, 0x4b, 0x54, 0x55, 0x4d
+        db      0x46, 0x5e, 0x5f, 0x47, 0x52, 0x59, 0x4a, 0x47

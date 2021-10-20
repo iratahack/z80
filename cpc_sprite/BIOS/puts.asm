@@ -7,6 +7,8 @@
         extern  screenTab
         extern  font
 
+        define  MODE0
+
         section CODE_0
 
         ;
@@ -121,7 +123,12 @@ putc:
         ld      d, (hl)
 
         ld      a, b
+IFDEF   MODE0
+        add     a                       ; x4 since 4 bytes per char in mode 0
+        add     a
+ELIFDEF MODE1
         add     a                       ; x2 since 2 bytes per char in mode 1
+ENDIF
         addde
 
         call    updateCursor
@@ -129,8 +136,8 @@ putc:
         pop     hl
 
         ld      b, 8
-nextByte:
-IF  1
+nextLine:
+IF  0
         ld      a, (hl)                 ; [7] Get byte of font data
         and     0xf0                    ; [7] Mask off lower nibble
         ld      c, a                    ; [4] Save upper nibble
@@ -155,6 +162,7 @@ IF  1
         and     (IX+0)                  ; [19] Pen mask
         ld      (de), a                 ; [7] Write to the screen
 ELSE
+IFDEF MODE1
         push    bc                      ; [11]
 
         ld      b, 2                    ; [7]
@@ -184,6 +192,42 @@ noPixel:
 
         pop     bc                      ; [10]
         dec     e
+ELIFDEF   MODE0
+
+        push    bc                      ; [11]
+
+        ld      b, 4                    ; [7] Bytes per char
+        ld      a, (hl)                 ; [7] Get byte of font data
+nextByte:
+        push    bc                      ; [11]
+
+        ld      c, a                    ; [4]
+        ld      b, 2                    ; [7] Pixels per byte
+        ld      IY, pixelMask           ; [14]
+        xor     a                       ; [4]
+nextPixel:
+        rlc     c                       ; [8]
+        jr      nc, noPixel             ; [12/7]
+
+        or      (IY+0)                  ; [19]
+noPixel:
+        inc     IY                      ; [10]
+        djnz    nextPixel               ; [13/8]
+
+        and     (IX+0)                  ; [19] Pen mask
+        ld      (de), a                 ; [7] Write to the screen
+        inc     e                       ; [4] Next screen address
+        ld      a, c                    ; [4]
+
+        pop     bc                      ; [10]
+        djnz    nextByte                ; [13/8]
+
+        pop     bc                      ; [10]
+        dec     e
+        dec     e
+        dec     e
+ENDIF
+
 ENDIF
         dec     e                       ; Previous screen address
         ; Next screen line down
@@ -192,25 +236,51 @@ ENDIF
         ld      d, a
 
         inc     hl                      ; Next byte of font data
-        djnz    nextByte
+        djnz    nextLine
 
         ret
 
         section RODATA_0
         ; Pen and pixel masks for video mode 1
-IF  0
+
+IFDEF   MODE0
+pixelMask:
+        db      %10101010
+        db      %01010101
+
+penMask:
+        db      %00000000
+        db      %11000000
+        db      %00001100
+        db      %11001100
+
+        db      %00110000
+        db      %11110000
+        db      %00111100
+        db      %11111100
+
+        db      %00000011
+        db      %11000011
+        db      %00001111
+        db      %11001111
+
+        db      %00110011
+        db      %11110011
+        db      %00111111
+        db      %11111111
+ELIFDEF MODE1
 pixelMask:
         db      %10001000
         db      %01000100
         db      %00100010
         db      %00010001
-ENDIF
+
 penMask:
         db      0x00                    ; Pen 0
         db      0x0f                    ; Pen 1
         db      0xf0                    ; Pen 2
         db      0xff                    ; Pen 3
-
+ENDIF
         section BSS_0
 cursorPos:
         ds      2
