@@ -20,7 +20,7 @@ HEAD=$(shell grep __$(BANK)_head *.map | awk '{gsub("^.", "0x", $$3); print $$3}
 all: $(PROJ).dsk
 
 clean:
-	rm -f *.[iod] *.dsk *.bin *.cpc *.map *.err
+	rm -f *.[iod] *.dsk *.bin *.cpc *.map *.err *.b? *.wav
 	rm -f BIOS/*.[iod] BIOS/*.err
  
 dis: $(PROJ).dsk
