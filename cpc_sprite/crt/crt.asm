@@ -182,11 +182,7 @@ loadNextBank:
         ; B = length of filename (0 for next file on tape)
         ; HL = address of filename
         ; DE = 2KB ram buffer for loading
-IFDEF TAPE
-        ld      b, 0
-ELSE
         ld      b, fileNameEnd-fileName
-ENDIF
         ld      hl, fileName
         call    loadBank
 
