@@ -66,10 +66,10 @@ ENDIF
         call    mc_start_program        ; start it
 
 crt0:
-        ; DE = Start of ROM useable memory
-        ; HL = End of ROM useable memory
-        ld      de, 0x4000
-        ld      hl, 0x7fff
+        ; DE = Start of useable RAM
+        ; HL = End of useable RAM - Use the value returned from mc_start_program
+        ; Beginning of bank 2 which is loaded last
+        ld      de, 0x8000
         call    kl_rom_walk             ; enable all roms
 
         ;------------------------------------------------------------------------
@@ -360,22 +360,22 @@ IFDEF   CRT_ORG_BANK_1
 ENDIF
 IFDEF   CRT_ORG_BANK_4
         db      '4'
-        db      0xc4
+        db      __BANK_4_head >> 16
         dw      __BANK_4_head
 ENDIF
 IFDEF   CRT_ORG_BANK_5
         db      '5'
-        db      0xc5
+        db      __BANK_5_head >> 16
         dw      __BANK_5_head
 ENDIF
 IFDEF   CRT_ORG_BANK_6
         db      '6'
-        db      0xc6
+        db      __BANK_6_head >> 16
         dw      __BANK_6_head
 ENDIF
 IFDEF   CRT_ORG_BANK_7
         db      '7'
-        db      0xc7
+        db      __BANK_7_head >> 16
         dw      __BANK_7_head
 ENDIF
 IFDEF   CRT_ORG_BANK_2
