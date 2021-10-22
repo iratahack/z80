@@ -34,7 +34,7 @@
         defc    mc_start_program=0xbd16
         defc    kl_rom_walk=0xbccb
         defc    scr_set_mode=0xbc0e
-        defc    current_drive=0xbe7d
+        defc    memory_pool=0xbe7d
         defc    cas_in_open=0xbc77
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
@@ -57,7 +57,8 @@ ENDIF
         ORG     CRT_ORG_CODE
         ;------------------------------------------------------------------------
         ; store the drive number the loader was run from
-        ld      a, (current_drive)
+        ld      hl, (memory_pool)
+        ld      a, (hl)                 ; Drive number 0 or 1
         ld      (drive+1), a
 
         ;------------------------------------------------------------------------
@@ -77,7 +78,8 @@ crt0:
         ; This will restore the drive number to the drive the loader was run from
 drive:
         ld      a, -1
-        ld      (current_drive), a
+        ld      hl, (memory_pool)
+        ld      (hl), a
 
         ;------------------------------------------------------------------------
         ; set screen mode 1
