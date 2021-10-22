@@ -26,6 +26,10 @@
         EXTERN  __BANK_7_head
 
         extern  _main
+;        define	TAPE
+        defc    TAPE_BLOCK_START=0xa864
+        defc    TAPE_BLOCK_LENGTH=14*3
+        defc    DISK_BLOCK_START=0xbc77
 
         defc    mc_start_program=0xbd16
         defc    kl_rom_walk=0xbccb
@@ -83,6 +87,14 @@ drive:
         call    setPalette
         ld      bc, 0x0000
         call    scr_set_border
+
+IFDEF TAPE
+        ; Enable tape (|tape)
+        ld      hl, TAPE_BLOCK_START
+        ld      de, DISK_BLOCK_START
+        ld      bc, TAPE_BLOCK_LENGTH
+        ldir
+ENDIF
         ;------------------------------------------------------------------------
         ; load all memory banks from disk
         call    loadBanks
@@ -137,6 +149,10 @@ loadBanks:
         ld      hl, loading             ; Null terminated text string
         call    puts
 
+        ; Turn off tape messages
+        ld      a, 1
+        call    0xbc6b
+
         ld      hl, bankTable
 loadNextBank:
         ld      a, (hl)                 ; Get the file extension
@@ -163,10 +179,14 @@ loadNextBank:
         ld      hl, fileNameEnd-1
         ld      (hl), a
 
-        ; B = length of filename
+        ; B = length of filename (0 for next file on tape)
         ; HL = address of filename
-        ; DE = load address (set from the bank table)
+        ; DE = 2KB ram buffer for loading
+IFDEF TAPE
+        ld      b, 0
+ELSE
         ld      b, fileNameEnd-fileName
+ENDIF
         ld      hl, fileName
         call    loadBank
 
@@ -174,11 +194,8 @@ loadNextBank:
         jr      loadNextBank            ; On to the next bank.
 
 loadBank:
-        push    de                      ; Save load address
-        ; DE = 2KB ram buffer
-        ld      de, 0xc000              ; ISN'T THIS THE SCREEN ADDRESS?
-        call    cas_in_open
-        pop     hl                      ; Restore load address
+        call    cas_in_open             ; Load address returned in DE
+        ex      de, hl
         call    cas_in_direct
         call    cas_in_close
         ret
