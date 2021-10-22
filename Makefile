@@ -15,5 +15,5 @@ cpc:test.dsk
 
 clean:
 	rm -f *.bin *.tap *.gb
-	rm -f *.dsk *.com *.cpc
+	rm -f *.dsk *.cpc *.wav
 	rm -f *.map
