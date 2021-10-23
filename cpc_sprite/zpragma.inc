@@ -1,4 +1,8 @@
-#pragma output CRT_FILL_STACK = 1
+#pragma output CRT_SCREEN_MODE=1
+#pragma output CRT_LOADING_MESSAGE = 1
+#pragma output CRT_BORDER_COLOR=0x0000
+#pragma output CRT_SET_CURSOR=0x100c
+//#pragma output CRT_FILL_STACK = 1
 #pragma output REGISTER_SP = 0xc000
 #pragma output CRT_STACK_SIZE = 0x80
 #pragma output CRT_ORG_CODE = 0x100

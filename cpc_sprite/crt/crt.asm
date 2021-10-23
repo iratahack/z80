@@ -29,17 +29,22 @@
 
         defc    mc_start_program=0xbd16
         defc    kl_rom_walk=0xbccb
-        defc    scr_set_mode=0xbc0e
+
         defc    memory_pool=0xbe7d
+
+        defc    scr_set_mode=0xbc0e
+        defc    scr_set_ink=0xbc32
+        defc    scr_set_border=0xbc38
+
+        defc    cas_noisy=0xbc6b
         defc    cas_in_open=0xbc77
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
-        defc    cas_noisy=0xbc6b
+
         defc    txt_set_cursor=0xbb75
         defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
-        defc    scr_set_ink=0xbc32
-        defc    scr_set_border=0xbc38
+
         defc    bank_io_hi=0x7f
         defc    default_map=0xc0
 
@@ -47,7 +52,13 @@ IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
 ENDIF
 IFNDEF  CRT_FILL_STACK
-        DEFC    CRT_FILL_STACK=1
+        DEFC    CRT_FILL_STACK=0
+ENDIF
+IFNDEF  CRT_LOADING_MESSAGE
+        DEFC    CRT_LOADING_MESSAGE=0
+ENDIF
+IFNDEF  CRT_SET_CURSOR
+        DEFC    CRT_SET_CURSOR=0x100c
 ENDIF
 
         SECTION CODE
@@ -90,16 +101,20 @@ drive:
         ld      hl, (memory_pool)
         ld      (hl), a
 
+IFDEF   CRT_SCREEN_MODE
         ;------------------------------------------------------------------------
         ; set screen mode 1
-        ld      a, 1
+        ld      a, CRT_SCREEN_MODE
         call    scr_set_mode
+ENDIF
 
         ld      hl, palette
         call    setPalette
 
-        ld      bc, 0x0000
+IFDEF   CRT_BORDER_COLOR
+        ld      bc, CRT_BORDER_COLOR
         call    scr_set_border
+ENDIF
 
         ;------------------------------------------------------------------------
         ; load all memory banks from disk
@@ -114,7 +129,7 @@ IF  CRT_INITIALIZE_BSS
 ENDIF
 
         ; Enable default memory map
-        ld      a, default_map
+        ld      c, default_map
         ld      b, bank_io_hi
         out     (c), c
 
@@ -128,10 +143,12 @@ ENDIF
         jp      _main
 
 loadBanks:
-        ld      hl, 0x100c              ; x/y cursor location
+IF  CRT_LOADING_MESSAGE
+        ld      hl, CRT_SET_CURSOR      ; x/y cursor location
         call    txt_set_cursor
-        ld      hl, loading             ; Null terminated text string
+        ld      hl, loadingMsg          ; Null terminated text string
         call    puts
+ENDIF
 
         ; Turn off tape messages
         ld      a, 1
@@ -206,6 +223,8 @@ loadBank2:
 
         ; We are about to clobber stuff
         ; Disable interrupts first
+        ; Interrupts should not be re-enabled until
+        ; an ISR has been initialized.
         di
         ; Copy bank 2 data from screen memory to
         ; its actual location.
@@ -265,12 +284,12 @@ nextBSSSection:
         or      e                       ; 0x0000 it's the end of
         ret     z                       ; the BSS table.
 
-        ld      a, (hl)                 ; Get the bank
+        ld      c, (hl)                 ; Get the bank
         inc     hl
 
         ; Switch memory banks
         ld      b, bank_io_hi
-        out     (c), a
+        out     (c), c
 
         ld      c, (hl)
         inc     hl
@@ -306,8 +325,10 @@ palette:
 blackPalette:
         db      0x00, 0x00, 0x00, 0x00, 0xff
 
-loading:
+IF  CRT_LOADING_MESSAGE
+loadingMsg:
         db      "Loading...", 0
+ENDIF
 
 fileName:
         db      "sprite.b0"
