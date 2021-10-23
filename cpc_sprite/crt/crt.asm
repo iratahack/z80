@@ -26,10 +26,6 @@
         EXTERN  __BANK_7_head
 
         extern  _main
-;        define	TAPE
-        defc    TAPE_BLOCK_START=0xa864
-        defc    TAPE_BLOCK_LENGTH=14*3
-        defc    DISK_BLOCK_START=0xbc77
 
         defc    mc_start_program=0xbd16
         defc    kl_rom_walk=0xbccb
@@ -38,6 +34,7 @@
         defc    cas_in_open=0xbc77
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
+        defc	cas_noisy=0xbc6b
         defc    txt_set_cursor=0xbb75
         defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
@@ -90,13 +87,6 @@ drive:
         ld      bc, 0x0000
         call    scr_set_border
 
-IFDEF TAPE
-        ; Enable tape (|tape)
-        ld      hl, TAPE_BLOCK_START
-        ld      de, DISK_BLOCK_START
-        ld      bc, TAPE_BLOCK_LENGTH
-        ldir
-ENDIF
         ;------------------------------------------------------------------------
         ; load all memory banks from disk
         call    loadBanks
@@ -153,7 +143,7 @@ loadBanks:
 
         ; Turn off tape messages
         ld      a, 1
-        call    0xbc6b
+        call    cas_noisy
 
         ld      hl, bankTable
 loadNextBank:
