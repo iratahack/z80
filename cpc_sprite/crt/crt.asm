@@ -34,7 +34,7 @@
         defc    cas_in_open=0xbc77
         defc    cas_in_direct=0xbc83
         defc    cas_in_close=0xbc7a
-        defc	cas_noisy=0xbc6b
+        defc    cas_noisy=0xbc6b
         defc    txt_set_cursor=0xbb75
         defc    txt_output=0xbb5a
         defc    txt_clear_window=0xbb6c
@@ -101,7 +101,8 @@ ENDIF
 
         ; Enable default memory map
         ld      a, default_map
-        include "bankswitch.asm"
+        ld      b, bank_io_hi
+        out     (c), c
 
 IFDEF   REGISTER_SP
         ld      sp, REGISTER_SP
@@ -244,7 +245,8 @@ nextBSSSection:
         inc     hl
 
         ; Switch memory banks
-        include "bankswitch.asm"
+        ld      b, bank_io_hi
+        out     (c), a
 
         ld      c, (hl)
         inc     hl
@@ -348,22 +350,22 @@ IFDEF   CRT_ORG_BANK_1
 ENDIF
 IFDEF   CRT_ORG_BANK_4
         db      '4'
-        db      __BANK_4_head >> 16
+        db      __BANK_4_head>>16
         dw      __BANK_4_head
 ENDIF
 IFDEF   CRT_ORG_BANK_5
         db      '5'
-        db      __BANK_5_head >> 16
+        db      __BANK_5_head>>16
         dw      __BANK_5_head
 ENDIF
 IFDEF   CRT_ORG_BANK_6
         db      '6'
-        db      __BANK_6_head >> 16
+        db      __BANK_6_head>>16
         dw      __BANK_6_head
 ENDIF
 IFDEF   CRT_ORG_BANK_7
         db      '7'
-        db      __BANK_7_head >> 16
+        db      __BANK_7_head>>16
         dw      __BANK_7_head
 ENDIF
 IFDEF   CRT_ORG_BANK_2
