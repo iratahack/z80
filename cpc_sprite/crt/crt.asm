@@ -47,7 +47,7 @@ IFNDEF  CRT_INITIALIZE_BSS
         DEFC    CRT_INITIALIZE_BSS=1
 ENDIF
 IFNDEF  CRT_FILL_STACK
-        DEFC    CRT_FILL_STACK=0
+        DEFC    CRT_FILL_STACK=1
 ENDIF
 
         SECTION CODE
@@ -64,11 +64,23 @@ ENDIF
         call    mc_start_program        ; start it
 
 crt0:
-        ; DE = Start of useable RAM
         ; HL = End of useable RAM - Use the value returned from mc_start_program
-        ; Beginning of bank 2 which is loaded last
+        ; DE = Start of useable RAM use beginning of bank 2 which is loaded last
         ld      de, 0x8000
         call    kl_rom_walk             ; enable all roms
+
+IFDEF   REGISTER_SP
+        di
+        ld      sp, REGISTER_SP
+  IF    CRT_FILL_STACK
+        ld      hl, REGISTER_SP-CRT_STACK_SIZE
+        ld      de, REGISTER_SP-CRT_STACK_SIZE+1
+        ld      bc, CRT_STACK_SIZE-1
+        ld      (hl), 0x55
+        ldir
+  ENDIF
+        ei
+ENDIF
 
         ;------------------------------------------------------------------------
         ; when AMSDOS is enabled, the drive reverts back to drive 0!
@@ -83,7 +95,9 @@ drive:
         ld      a, 1
         call    scr_set_mode
 
+        ld      hl, palette
         call    setPalette
+
         ld      bc, 0x0000
         call    scr_set_border
 
@@ -104,34 +118,11 @@ ENDIF
         ld      b, bank_io_hi
         out     (c), c
 
-IFDEF   REGISTER_SP
-        ld      sp, REGISTER_SP
-ENDIF
-
-        ;
-        ; Fill the stack with a known pattern so
-        ; we can see how much we are using.
-        ;
-        ; Interrupts should be disabled so no need to worry
-        ; about ISR accessing the stack.
-        ;
-IF  CRT_FILL_STACK
-fillStack:
-        ld      (stackSave+1), sp
-        ld      de, 0x5555              ; Word to fill
-        ld      b, CRT_STACK_SIZE/2     ; Stack size in words
-fillStackLoop:
-        push    de                      ; Push data to stack
-        djnz    fillStackLoop           ; Loop for all words
-stackSave:
-        ld      sp, -1
-ENDIF
-
-        ; Clear the RST addresses
+        ; Clean memory below this loader
         ld      hl, 0x0000
         ld      (hl), 0x00
         ld      de, 0x0001
-        ld      bc, 0x3f
+        ld      bc, CRT_ORG_CODE-1
         ldir
 
         jp      _main
@@ -183,10 +174,44 @@ loadNextBank:
         jr      loadNextBank            ; On to the next bank.
 
 loadBank:
+        cp      '2'                     ; Special handling for bank 2
+        jr      z, loadBank2
+
         call    cas_in_open             ; Load address returned in DE
         ex      de, hl
         call    cas_in_direct
         call    cas_in_close
+        ret
+loadBank2:
+        ; Bank 2 is used by the ROMs. Load bank 2
+        ; data to the screen then copy it to its
+        ; actual location.
+        ; Before loading to the screen set all
+        ; pens in the palette to black so the
+        ; data loaded cannot be seen.
+        push    hl
+        push    bc
+        ld      hl, blackPalette
+        call    setPalette
+        pop     bc
+        pop     hl
+
+        ld      de, 0xc000              ; Block buffer address
+        call    cas_in_open             ; Load address returned in DE
+        ld      hl, 0xc000              ; Force load to screen memory
+        push    bc                      ; Save the length
+        call    cas_in_direct
+        call    cas_in_close
+        pop     bc                      ; Restore the length
+
+        ; We are about to clobber stuff
+        ; Disable interrupts first
+        di
+        ; Copy bank 2 data from screen memory to
+        ; its actual location.
+        ld      hl, 0xc000
+        ld      de, 0x8000
+        ldir
         ret
 
         ;
@@ -202,7 +227,6 @@ puts:
         jr      puts
 
 setPalette:
-        ld      hl, palette
         xor     a
 
 nextPen:
@@ -279,6 +303,8 @@ ENDIF
         SECTION RODATA
 palette:
         db      0x00, 0x18, 0x02, 0x1a, 0xff
+blackPalette:
+        db      0x00, 0x00, 0x00, 0x00, 0xff
 
 loading:
         db      "Loading...", 0
