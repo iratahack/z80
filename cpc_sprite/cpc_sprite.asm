@@ -1,3 +1,5 @@
+        include "BIOS/macros.inc"
+
         public  _main
 
         extern  initISR
@@ -9,6 +11,7 @@
         extern  setCursor
         extern  setMode
         extern  initPalette
+        extern  vsync
 
         section CODE_0
 _main:
@@ -73,20 +76,26 @@ saveSP:
         ld      sp, -1
         ei
 
+        call    vsync
+
         ld      bc, 0x7F10
 firstColor:
-        ld      hl, borderColors
+        ld      de, borderColors
 loop:
-        ld      a, (hl)
+        ld      a, (de)
         or      a
-        jr      z, firstColor
+        jp      m, firstColor
+
+        ld      hl, palette0
+        addhl
+        ld      a, (hl)
 
         halt
 
         out     (c), c
         out     (c), a
 
-        inc     hl
+        inc     de
         jp      loop
 
         ret
@@ -96,7 +105,7 @@ string:
         db      "Craig waz ear!", 0
 
 borderColors:
-        db      0x4c, 0x52, 0x45, 0x5a, 0x4d, 0x4a, 0x00
+        db      0, 1, 2, 3, 4, 5, 0x80
 
 testSprite:
         db      %00110000, %11000000
