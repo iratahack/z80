@@ -8,7 +8,7 @@
 #pragma output CRT_ORG_CODE = 0x100
 #pragma output CRT_ORG_BANK_0 = 0x300
 //#pragma output CRT_ORG_BANK_1 = 0x4000
-#pragma output CRT_ORG_BANK_2 = 0x8000
+//#pragma output CRT_ORG_BANK_2 = 0x8000
 #pragma output CRT_ORG_BANK_3 = 0xc000
 //#pragma output CRT_ORG_BANK_4 = 0xc44000
 //#pragma output CRT_ORG_BANK_5 = 0xc54000
