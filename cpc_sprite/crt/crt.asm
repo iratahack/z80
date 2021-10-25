@@ -233,6 +233,8 @@ loadBank2:
         ldir
         ret
 
+IF  CRT_LOADING_MESSAGE
+
         ;
         ; Display the null terminated string pointed to by hl
         ; at the current cursor location.
@@ -244,6 +246,7 @@ puts:
         ret     z
         call    txt_output
         jr      puts
+ENDIF
 
 setPalette:
         xor     a
