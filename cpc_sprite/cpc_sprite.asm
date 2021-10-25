@@ -92,6 +92,10 @@ loop:
 
         halt
 
+        ld      c, 0x10
+        out     (c), c
+        out     (c), a
+        ld      c, 0x00
         out     (c), c
         out     (c), a
 
