@@ -1,11 +1,14 @@
+PROJ=test
 
 .PHONY: all clean
 
-all: test.dsk
+all: $(PROJ).dsk
 
 %.dsk: %.c
-	zcc +cpc -lcpcfs -subtype=dsk -create-app -o test.bin test.c -DCPC -m
-	#zcc +cpc -lcpcfs -lm -subtype=dsk -create-app -o test.bin test.c -DCPC -m
+	zcc +cpc -lcpcfs -subtype=dsk -o $@ $< -create-app 
 
 clean:
 	rm -f *.bin *.dsk *.cpc *.wav *.map
+
+run: $(PROJ).dsk
+	caprice32.launcher $(PROJ).dsk -a run\"$(PROJ).cpc
