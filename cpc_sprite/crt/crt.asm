@@ -324,7 +324,7 @@ ENDIF
 
         SECTION RODATA
 palette:
-        db      0x00, 0x18, 0x02, 0x1a, 0xff
+        db 00, 06, 18, 26, 255
 blackPalette:
         db      0x00, 0x00, 0x00, 0x00, 0xff
 

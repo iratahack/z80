@@ -106,7 +106,7 @@ loop:
 
         section RODATA_0
 string:
-        db      "Craig waz ear!", 0
+        db      "Irata waz ear!", 0
 
 borderColors:
         db      0, 1, 2, 3, 4, 5, 0x80
