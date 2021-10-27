@@ -20,7 +20,7 @@ HEAD=$(shell grep __$(BANK)_head *.map | awk '{gsub("^.", "0x", $$3); print $$3}
 all: $(PROJ).dsk
 
 clean:
-	rm -f *.[iod] *.dsk *.bin *.cpc *.map *.err *.b? *.wav
+	rm -f *.[iod] *.dsk *.bin *.cpc *.map *.err *.b? *.wav *.zx0
 	rm -f BIOS/*.[iod] BIOS/*.err
  
 dis: $(PROJ).dsk
@@ -32,6 +32,9 @@ run: $(PROJ).dsk
 ifeq (,$(findstring $(MAKECMDGOALS),clean))
 %.d: %.asm
 	@./mkdep.sh $< > $@
+
+title.scr.zx0: title.scr
+	z88dk-zx0 -f -q $<
 endif
 
 %.dsk: $(OBJECTS)

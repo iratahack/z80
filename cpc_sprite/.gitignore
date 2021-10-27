@@ -4,5 +4,4 @@
 *.map
 *.me
 *.b?
-tools
-sector-cpc
+*.zx0

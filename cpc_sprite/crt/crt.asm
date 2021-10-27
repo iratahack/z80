@@ -191,6 +191,8 @@ loadNextBank:
         jr      loadNextBank            ; On to the next bank.
 
 loadBank:
+        cp      '3'                     ; Special handling for bank 3
+        jr      z, loadBank3
         cp      '2'                     ; Special handling for bank 2
         jr      z, loadBank2
 
@@ -231,6 +233,27 @@ loadBank2:
         ld      hl, 0xc000
         ld      de, 0x8000
         ldir
+        ret
+loadBank3:
+        ld      de, 0x4000              ; Use bank 1
+        call    cas_in_open             ; Load address returned in DE
+        ld      hl, 0x4000              ; Use bank 1
+        call    cas_in_direct
+        call    cas_in_close
+
+        ld      hl, 0x4000				; Source of compressed data
+        ld      de, 0xc000				; Destination of compressed data
+
+		; Disable interrupts and
+		; save af' as its used by
+		; the ROM ISR
+        di
+        ex      af, af'
+        push    af
+        call    decompress
+        pop     af
+        ex      af, af'
+        ei
         ret
 
 IF  CRT_LOADING_MESSAGE
@@ -321,6 +344,8 @@ sectionDone:
         jr      nextBSSSection
 
 ENDIF
+decompress:
+        include "dzx0_standard.asm"
 
         SECTION RODATA
 palette:
@@ -455,8 +480,6 @@ ENDIF
 IFDEF   CRT_ORG_BANK_2
         SECTION BANK_2
         org     CRT_ORG_BANK_2
-        SECTION code_clib
-        SECTION code_l_sccz80
         SECTION CODE_2
         SECTION RODATA_2
         SECTION DATA_2
