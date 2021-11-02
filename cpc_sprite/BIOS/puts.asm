@@ -7,8 +7,11 @@
         extern  screenTab
         extern  font
         extern  screenMode
+        extern  screenWidth
 
         section CODE_0
+
+        defc    SCREEN_HEIGHT=24
 
         ;
         ; Update the cursor to the next character position.
@@ -27,21 +30,19 @@
         ;   C = New row position
         ;   A = Corrupted
 updateCursor:
-        ld      a, b
-        cp      39                      ; Screen character width in mode 1
-        jr      nz, nextCol
+        inc     b                       ; Increment column position
+        ld      a, (screenWidth)        ; (screenWidth)
+        cp      b
+        jr      nz, setCursor
+
 nl:
-        ld      b, 0                    ; Reset to left size of screen
+        ld      b, 0
+        inc     c
         ld      a, c
-        cp      24                      ; screen character height in mode 1
-        jr      nz, nextRow
+        cp      SCREEN_HEIGHT
+        jr      nz, setCursor
+
         ld      c, 0
-        jr      setCursor
-nextRow:
-        inc     c                       ; Next row
-        jr      setCursor
-nextCol:
-        inc     b
         ;
         ; Set the text cursor location.
         ;
