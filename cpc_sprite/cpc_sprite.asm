@@ -43,7 +43,7 @@ waitForKey:
         cp      13
         jr      z, inputDone
 
-        ld      e, 3
+        ld      e, 0x01
         call    putc
 
         jp      waitForKey
