@@ -6,8 +6,7 @@
 
         extern  screenTab
         extern  font
-
-        define  MODE0
+        extern  screenMode
 
         section CODE_0
 
@@ -87,29 +86,81 @@ puts:
         ;   E = Pen
 putc:
         cp      13                      ; Handle CR/LF
-        push    af
-        call    z, newLine
-        pop     af
-        ret     z
+        jr      z, newLine
 
         sub     ' '                     ; Characters below 0x20 are not displayed
         ret     c
 
-        ld      IX, penMask
-        ld      d, 0x00
-        add     IX, de
-
+        ; HL will point to the font data
         ld      l, a
         ld      h, 0
         add     hl, hl
         add     hl, hl
         add     hl, hl
-        ld      de, font
-        add     hl, de
-
+        ld      bc, font
+        add     hl, bc
         push    hl
 
+        ld      d, 0
         ld      bc, (cursorPos)
+
+        ld      a, (screenMode)
+        or      a
+        jr      nz, chkMode1
+
+        ; Mode 0
+        ld      hl, penMask0
+        add     hl, de
+        ld      a, (hl)
+        ld      (penMask+1), a
+
+        ld      a, 4                    ; Bytes per char
+        ld      (bpc+1), a
+        ld      a, 2                    ; Pixels per byte
+        ld      (ppb+1), a
+
+        ld      hl, pixelMask0
+        ld      a, b
+        add     a
+        add     a
+        jr      setupDone
+chkMode1:
+        cp      1
+        jr      nz, chkMode2
+
+        ; Mode 1
+        ld      hl, penMask1
+        add     hl, de
+        ld      a, (hl)
+        ld      (penMask+1), a
+
+        ld      a, 2                    ; Bytes per char
+        ld      (bpc+1), a
+        ld      a, 4                    ; Pixels per byte
+        ld      (ppb+1), a
+        ld      hl, pixelMask1
+        ld      a, b
+        add     a
+        jr      setupDone
+chkMode2:
+
+        ; Mode 2
+        ld      hl, penMask2
+        add     hl, de
+        ld      a, (hl)
+        ld      (penMask+1), a
+
+        ld      a, 1                    ; Bytes per char
+        ld      (bpc+1), a
+        ld      a, 8                    ; Pixels per byte
+        ld      (ppb+1), a
+        ld      hl, pixelMask2
+        ld      a, b
+setupDone:
+
+        ld      (pm+2), hl
+
+        ; DE will point to the screen memory
         ld      de, screenTab
         ld      l, c
         ld      h, 0
@@ -121,115 +172,50 @@ putc:
         ld      e, (hl)
         inc     hl
         ld      d, (hl)
-
-        ld      a, b
-IFDEF   MODE0
-        add     a                       ; x4 since 4 bytes per char in mode 0
-        add     a
-ELIFDEF MODE1
-        add     a                       ; x2 since 2 bytes per char in mode 1
-ENDIF
         addde
 
         call    updateCursor
 
         pop     hl
 
-        ld      b, 8
+        ld      b, 8                    ; # screen lines per char
 nextLine:
-IF  0
-        ld      a, (hl)                 ; [7] Get byte of font data
-        and     0xf0                    ; [7] Mask off lower nibble
-        ld      c, a                    ; [4] Save upper nibble
-        rrca                            ; [4] Move upper nibble to lower nibble
-        rrca                            ; [4]
-        rrca                            ; [4]
-        rrca                            ; [4]
-        or      c                       ; [4] Or upper nibble back in
-        and     (IX+0)                  ; [19] Pen mask
-        ld      (de), a                 ; [7] Write to the screen
+        push    de
+        push    bc
 
-        inc     e                       ; [4] Next screen address
-
-        ld      a, (hl)                 ; [7] Get byte of font data
-        and     0x0f                    ; [7] Mask off upper nibble
-        ld      c, a                    ; [4] Save lower nibble
-        rlca                            ; [4] Move lower nibble to upper nibble
-        rlca                            ; [4]
-        rlca                            ; [4]
-        rlca                            ; [4]
-        or      c                       ; [4] Or lower nibble back in
-        and     (IX+0)                  ; [19] Pen mask
-        ld      (de), a                 ; [7] Write to the screen
-ELSE
-  IFDEF MODE1
-        push    bc                      ; [11]
-
-        ld      b, 2                    ; [7]
-        ld      a, (hl)                 ; [7] Get byte of font data
-nextNibble:
-        push    bc                      ; [11]
-
-        ld      c, a                    ; [4]
-        ld      b, 4                    ; [7]
-        ld      IY, pixelMask           ; [14]
-        xor     a                       ; [4]
-nextPixel:
-        rlc     c                       ; [8]
-        jr      nc, noPixel             ; [12/7]
-        or      (IY+0)                  ; [19]
-noPixel:
-        inc     IY                      ; [10]
-        djnz    nextPixel               ; [13/8]
-
-        and     (IX+0)                  ; [19] Pen mask
-        ld      (de), a                 ; [7] Write to the screen
-        inc     e                       ; [4] Next screen address
-        ld      a, c                    ; [4]
-
-        pop     bc                      ; [10]
-        djnz    nextNibble              ; [13/8]
-
-        pop     bc                      ; [10]
-        dec     e
-  ELIFDEF   MODE0
-
-        push    bc                      ; [11]
-
-        ld      b, 4                    ; [7] Bytes per char
-        ld      a, (hl)                 ; [7] Get byte of font data
+bpc:
+        ld      b, -1                   ; Bytes per char
+        ld      a, (hl)                 ; Get byte of font data
 nextByte:
-        push    bc                      ; [11]
+        push    bc
 
-        ld      c, a                    ; [4]
-        ld      b, 2                    ; [7] Pixels per byte
-        ld      IY, pixelMask           ; [14]
-        xor     a                       ; [4]
+        ld      c, a
+ppb:
+        ld      b, -1                   ; Pixels per byte
+pm:
+        ld      IY, -1
+        xor     a
 nextPixel:
-        rlc     c                       ; [8]
-        jr      nc, noPixel             ; [12/7]
+        rlc     c
+        jr      nc, noPixel
 
-        or      (IY+0)                  ; [19]
+        or      (IY+0)
 noPixel:
-        inc     IY                      ; [10]
-        djnz    nextPixel               ; [13/8]
+        inc     IY
+        djnz    nextPixel
 
-        and     (IX+0)                  ; [19] Pen mask
-        ld      (de), a                 ; [7] Write to the screen
-        inc     e                       ; [4] Next screen address
-        ld      a, c                    ; [4]
+penMask:
+        and     -1
+        ld      (de), a                 ; Write to the screen
+        inc     e                       ; Next screen address
+        ld      a, c
 
-        pop     bc                      ; [10]
-        djnz    nextByte                ; [13/8]
+        pop     bc
+        djnz    nextByte
 
-        pop     bc                      ; [10]
-        dec     e
-        dec     e
-        dec     e
-  ENDIF
+        pop     bc
+        pop     de
 
-ENDIF
-        dec     e                       ; Previous screen address
         ; Next screen line down
         ld      a, 0x08
         add     d
@@ -241,14 +227,7 @@ ENDIF
         ret
 
         section RODATA_0
-        ; Pen and pixel masks for video mode 1
-
-IFDEF   MODE0
-pixelMask:
-        db      %10101010
-        db      %01010101
-
-penMask:
+penMask0:
         db      %00000000
         db      %11000000
         db      %00001100
@@ -268,19 +247,37 @@ penMask:
         db      %11110011
         db      %00111111
         db      %11111111
-ELIFDEF MODE1
-pixelMask:
+
+penMask1:
+        db      %00000000
+        db      %11110000
+        db      %00001111
+        db      %11111111
+
+penMask2:
+        db      %00000000
+        db      %11111111
+
+pixelMask0:
+        db      %10101010
+        db      %01010101
+
+pixelMask1:
         db      %10001000
         db      %01000100
         db      %00100010
         db      %00010001
 
-penMask:
-        db      0x00                    ; Pen 0
-        db      0x0f                    ; Pen 1
-        db      0xf0                    ; Pen 2
-        db      0xff                    ; Pen 3
-ENDIF
+pixelMask2:
+        db      %10000000
+        db      %01000000
+        db      %00100000
+        db      %00010000
+        db      %00001000
+        db      %00000100
+        db      %00000010
+        db      %00000001
+
         section BSS_0
 cursorPos:
         ds      2
