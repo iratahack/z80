@@ -13,9 +13,16 @@
         extern  initPalette
         extern  vsync
 
+        extern  wyz_player_init
+        extern  wyz_play_song
+
         section CODE_0
 _main:
         call    initISR
+        call    wyz_player_init
+
+        ld      a, 1
+        call    wyz_play_song
 
         call    cls
 
@@ -106,7 +113,7 @@ loop:
 
         section RODATA_0
 string:
-        db      "Irata waz ear!", 0
+        db      "Irata waz ear!", 13, "<CR>", 0
 
 borderColors:
         db      0, 1, 2, 3, 4, 5, 0x80
@@ -126,4 +133,4 @@ palette0:
         db      0x46, 0x5e, 0x5f, 0x47, 0x52, 0x59, 0x44, 0x57, 0x44
 palette1:
         db      0x44, 0x4a, 0x53, 0x4c, 0x4b, 0x54, 0x55, 0x4d
-        db      0x46, 0x5e, 0x5f, 0x47, 0x52, 0x59, 0x4a, 0x47, 0x44
+        db      0x46, 0x5e, 0x5f, 0x47, 0x52, 0x59, 0x4a, 0x47, 0x4a

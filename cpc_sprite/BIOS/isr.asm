@@ -1,5 +1,6 @@
         public  initISR
         extern  flashInk
+        extern  wyz_play_frame
 
         defc    JP_OPCODE=0xc3
         defc    RST_7=0x38
@@ -35,15 +36,29 @@ nextByte:
         inc     hl
         jr      z, nextByte
 
+IF 0
         ; check for vsync
         ld      b, 0xf5
         in      a, (c)
         rra
         jr      nc, noVsync
+ELSE
+        ld      a, (soundCount)
+        inc     a
+        cp      6
+        jr      nz, skip
+ENDIF
+        and     a
+        call    wyz_play_frame
+
+        xor     a
+skip:
+        ld      (soundCount), a
+
 
         ld      a, (flashCount)
         inc     a
-        cp      FLASH_SPEED
+        cp      FLASH_SPEED*6
         jr      nz, noFlash
 
         call    flashInk
@@ -64,6 +79,8 @@ noVsync:
 
         section BSS_0
 flashCount:
-        db      0
+        ds      1
 fastTick:
         ds      5                       ; Enough bits for 15 years at 1/300
+soundCount:
+        ds      1
