@@ -18,8 +18,8 @@
 
         section CODE_0
 _main:
-        call    initISR
         call    wyz_player_init
+        call    initISR
 
         ld      a, 1
         call    wyz_play_song
