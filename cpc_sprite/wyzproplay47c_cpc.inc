@@ -212,14 +212,12 @@ WRITEPSGHL:
         OUT     (C), A
         LD      BC, $F6C0
         OUT     (C), C
-        DEFB    $ED
-        DEFB    $71
+		OUT		(C), 0
         LD      B, $F5
         OUTI
         LD      BC, $F680
         OUT     (C), C
-        DEFB    $ED
-        DEFB    $71
+		OUT		(C), 0
         RET
 
 ;PLAYER OFF
