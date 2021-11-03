@@ -37,7 +37,7 @@ SONG_2:
 
         section BSS_0
 BUFFER_DEC:
-        ds      0x80
+        ds      CHANNEL_BUFF_SIZE*4
 SONIDO_REGS:
         ds      2
 EFECTO_REGS:

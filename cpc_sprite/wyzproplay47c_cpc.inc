@@ -9,11 +9,13 @@
 ; * TABLA DE CANCIONES
 ;______________________________________________________
 
+        defc    PSG_NUM_REG=14
+        defc    CHANNEL_BUFF_SIZE=0x10
 wyz_player_init:
 WYZPLAYER_INIT:
         CALL    PLAYER_OFF
 
-        LD      DE, #0020               ; No. BYTES RESERVADOS POR CANAL
+        LD      DE, CHANNEL_BUFF_SIZE   ; No. BYTES RESERVADOS POR CANAL
 
         LD      HL, BUFFER_DEC          ;* RESERVAR MEMORIA PARA BUFFER DE SONIDO!!!!!
         LD      (CANAL_A), HL
@@ -30,7 +32,7 @@ INICIO:
         CALL    ROUT
         LD      HL, PSG_REG
         LD      DE, PSG_REG_SEC
-        LD      BC, 14
+        LD      BC, PSG_NUM_REG
         LDIR
 
         CALL    REPRODUCE_SONIDO
@@ -212,12 +214,12 @@ WRITEPSGHL:
         OUT     (C), A
         LD      BC, $F6C0
         OUT     (C), C
-		OUT		(C), 0
+        OUT     (C), 0
         LD      B, $F5
         OUTI
         LD      BC, $F680
         OUT     (C), C
-		OUT		(C), 0
+        OUT     (C), 0
         RET
 
 ;PLAYER OFF
@@ -230,7 +232,7 @@ PLAYER_OFF:
 CLEAR_PSG_BUFFER:
         LD      HL, PSG_REG
         LD      DE, PSG_REG+1
-        LD      BC, 14
+        LD      BC, PSG_NUM_REG-1
         LD      (HL), A
         LDIR
 
@@ -239,7 +241,7 @@ CLEAR_PSG_BUFFER:
 
         LD      HL, PSG_REG
         LD      DE, PSG_REG_SEC
-        LD      BC, 14
+        LD      BC, PSG_NUM_REG
         LDIR
 
         JP      ROUT
@@ -990,6 +992,7 @@ EXT_WORD:
         LD      D, (HL)
         RET
 
+        section RODATA_0
 ;TABLA DE DATOS DEL SELECTOR DEL CANAL DE EFECTOS DE RITMO
 
 TABLA_DATOS_CANAL_SFX:
@@ -1017,6 +1020,7 @@ SELECT_CANAL_C:
 
 ;____________________________________
 
+        section BSS_0
 
 INTERR: DB      0                       ;INTERRUPTORES 1=ON 0=OFF
  ;BIT 0=CARGA CANCION ON/OFF
@@ -1132,9 +1136,9 @@ PUNTERO_SONIDO:
 ;DB (13) BUFFERs DE REGISTROS DEL PSG
 
 PSG_REG:
-        DS      16
+        DS      PSG_NUM_REG
 PSG_REG_SEC:
-        DS      16
+        DS      PSG_NUM_REG
 ENVOLVENTE:
         DB      0                       ;DB : FORMA DE LA ENVOLVENTE
  ;BIT 0 : FRECUENCIA CANAL ON/OFF
@@ -1142,6 +1146,3 @@ ENVOLVENTE:
  ;BIT 3-3 : FORMA
 ENVOLVENTE_BACK:
         DB      0                       ;DB: BACKUP DE LA FORMA DE LA ENVOLENTE
-
-
-
