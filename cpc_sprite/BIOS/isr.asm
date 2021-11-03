@@ -19,6 +19,20 @@ initISR:
 
         ret
 
+		; Called from isr during vsync
+		;
+		; Things which need to be done every 1/50th
+		; of a second.
+vSync:
+        call    wyz_play_frame
+
+        ld      hl, flashCount
+        dec     (hl)
+        ret     p
+        ld      (hl), FLASH_SPEED
+        call    flashInk
+        ret
+
 isr:
         push    af
         push    bc
@@ -28,7 +42,7 @@ isr:
         push    iy
 
         ;
-        ; Increment the 8-bit ticks count
+        ; Increment the 40-bit ticks count
         ;
         ld      hl, fastTick
 nextByte:
@@ -36,36 +50,11 @@ nextByte:
         inc     hl
         jr      z, nextByte
 
-IF 0
         ; check for vsync
         ld      b, 0xf5
         in      a, (c)
         rra
-        jr      nc, noVsync
-ELSE
-        ld      a, (soundCount)
-        inc     a
-        cp      6
-        jr      nz, skip
-ENDIF
-        and     a
-        call    wyz_play_frame
-
-        xor     a
-skip:
-        ld      (soundCount), a
-
-
-        ld      a, (flashCount)
-        inc     a
-        cp      FLASH_SPEED*6
-        jr      nz, noFlash
-
-        call    flashInk
-
-        xor     a
-noFlash:
-        ld      (flashCount), a
+        call    c, vSync
 
 noVsync:
         pop     iy
@@ -78,9 +67,9 @@ noVsync:
         reti                            ; Acknowledge and return from interrupt
 
         section BSS_0
-flashCount:
-        ds      1
 fastTick:
         ds      5                       ; Enough bits for 15 years at 1/300
 soundCount:
+        ds      1
+flashCount:
         ds      1
