@@ -17,9 +17,9 @@
         ; Update the cursor to the next character position.
         ;
         ; Increment the cursor X position, if the cursor hits the
-        ; right edge of the screen is is set to 0 and the Y position
-        ; is incremented. If the Y position hits the bottom of the
-        ; screen it is reset to 0.
+        ; right edge of the screen, set it to 0 and increment the Y
+        ; position. If the Y position hits the bottom of the
+        ; screen, set it to 0.
         ;
         ; Entry:
         ;   B = Column
@@ -53,6 +53,15 @@ setCursor:
         ld      (cursorPos), bc
         ret
 
+        ; Set the cursor to the beginning of the next line.
+        ;
+        ; If the bottom of the screen is reached the cursor
+        ; wraps to the top of the screen.
+        ;
+        ; Exit:
+        ;   B = New column position
+        ;   C = New row position
+        ;   A = Corrupted
 newLine:
         ld      bc, (cursorPos)
         jr      nl
