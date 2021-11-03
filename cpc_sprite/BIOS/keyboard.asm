@@ -15,7 +15,7 @@ scanKeyboard:
         di
 
         ; Set PPI:
-        ; Port A = Output
+        ; Port A = Output**
         ; Port B = Input
         ; Port C = Output
         ld      bc, 0xf782
@@ -33,7 +33,7 @@ scanKeyboard:
         out     (c), c
 
         ; Set PPI:
-        ; Port A = Input
+        ; Port A = Input**
         ; Port B = Input
         ; Port C = Output
         ld      bc, 0xf792
@@ -94,6 +94,11 @@ nextKey:
         jr      nz, nextRow
 
 keyDetected:
+        ; Set PPI:
+        ; Port A = Output**
+        ld      bc, 0xf782
+        out     (c), c
+
         ld      a, (de)
         or      a
         ei
