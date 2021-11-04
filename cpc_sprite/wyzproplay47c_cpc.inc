@@ -214,12 +214,14 @@ WRITEPSGHL:
         OUT     (C), A
         LD      BC, $F6C0
         OUT     (C), C
-        OUT     (C), 0
+        DB      $ED                     ; Undocumented op-code out(c), 0
+        DB      $71
         LD      B, $F5
         OUTI
         LD      BC, $F680
         OUT     (C), C
-        OUT     (C), 0
+        DB      $ED                     ; Undocumented op-code out(c), 0
+        DB      $71
         RET
 
 ;PLAYER OFF
