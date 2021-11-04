@@ -69,7 +69,5 @@ noVsync:
         section BSS_0
 fastTick:
         ds      5                       ; Enough bits for 15 years at 1/300
-soundCount:
-        ds      1
 flashCount:
         ds      1
