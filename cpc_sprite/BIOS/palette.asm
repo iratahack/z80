@@ -13,7 +13,7 @@
 		;	DE = pointer to palette 1
 		;
         ; Exit:
-        ;   A, B, C, HL are corrupted.		
+        ;   A, B, C, HL are corrupted.
 initPalette:
         ld      (palettes), hl
         ld      (palettes+2), de
@@ -63,7 +63,7 @@ setInk:
         out     (c), c
         ret
 
-		section	RODATA_0
+		section	DATA_0
 index:
         db      0xaa
 
