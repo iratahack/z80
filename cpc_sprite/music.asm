@@ -34,13 +34,3 @@ SONG_1:
         binary  "music/jinj_med.mus"
 SONG_2:
         binary  "music/death.wyz.mus"
-
-        section BSS_0
-BUFFER_DEC:
-        ds      CHANNEL_BUFF_SIZE*4
-SONIDO_REGS:
-        ds      2
-EFECTO_REGS:
-        ds      2
-PUNTERO_EFECTO:
-        ds      2

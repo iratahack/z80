@@ -1146,3 +1146,11 @@ ENVOLVENTE:
  ;BIT 3-3 : FORMA
 ENVOLVENTE_BACK:
         DB      0                       ;DB: BACKUP DE LA FORMA DE LA ENVOLENTE
+BUFFER_DEC:
+        ds      CHANNEL_BUFF_SIZE*4
+SONIDO_REGS:
+        ds      2
+EFECTO_REGS:
+        ds      2
+PUNTERO_EFECTO:
+        ds      2
