@@ -6,27 +6,34 @@
         defc    NUM_PENS=0x11
 
         section CODE_0
+		; Initialize hardware and software palettes.
+		;
+		; Entry:
+		;	HL = Pointer to palette 0
+		;	DE = pointer to palette 1
+		;
+        ; Exit:
+        ;   A, B, C, HL are corrupted.		
 initPalette:
         ld      (palettes), hl
         ld      (palettes+2), de
         call    setPalette
         ret
 
-        ; Alternate between the two palettes
+        ; Alternate between the two palettes.
         ;
         ; Exit:
         ;   A, B, C, HL are corrupted.
 flashInk:
-        ld      a, (index)
-        xor     1
-        ld      (index), a
+        ld		hl, index
+        rlc		(hl)
         ld      hl, (palettes)
-        jr      z, setPalette
+        jr      nc, setPalette
         ld      hl, (palettes+2)
         ; Set all 16 colors of the palette
         ;
         ; Entry:
-        ;   HL = Pointer to 16 bytes of palette data
+        ;   HL = Pointer to 17 bytes of palette data
         ;
         ; Exit:
         ;   A, B, C, HL are corrupted.
@@ -56,9 +63,11 @@ setInk:
         out     (c), c
         ret
 
-        section BSS_0
+		section	RODATA_0
 index:
-        ds      1
+        db      0xaa
+
+        section BSS_0
 palettes:
         ds      2
         ds      2
