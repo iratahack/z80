@@ -27,7 +27,7 @@ _main:
 
         call    wyz_player_init
 
-        ; Instrrupts can only be initialized after
+        ; Interrupts must only be initialized after
         ; initPalette and wyz_palyer_init have been
         ; called.
         call    initISR
