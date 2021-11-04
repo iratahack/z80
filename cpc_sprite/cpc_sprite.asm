@@ -18,20 +18,26 @@
 
         section CODE_0
 _main:
-        call    wyz_player_init
-        call    initISR
-
-        ld      a, 1
-        call    wyz_play_song
-
-        call    cls
-
         ld      a, 0
         call    setMode
 
         ld      hl, palette0
         ld      de, palette1
         call    initPalette
+
+        call    wyz_player_init
+
+        ; Instrrupts can only be initialized after
+        ; initPalette and wyz_palyer_init have been
+        ; called.
+        call    initISR
+
+        call    cls
+
+        ld      a, 1
+        di
+        call    wyz_play_song
+        ei
 
         ld      bc, 0x030c
         call    setCursor
