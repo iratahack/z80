@@ -12,9 +12,11 @@
         extern  setMode
         extern  initPalette
         extern  vsync
+        extern  border
 
         extern  wyz_player_init
         extern  wyz_play_song
+        extern  wyz_player_stop
 
         section CODE_0
 _main:
@@ -63,6 +65,12 @@ waitForKey:
 
 inputDone:
 
+        di
+        call    wyz_player_stop
+        xor     a
+        call    wyz_play_song
+        ei
+
         ld      hl, 96                  ; Character row
 
         di
@@ -105,11 +113,12 @@ loop:
 
         halt
 
-        ld      c, 0x10
+        ; Change border color (pen 16)
         out     (c), c
         out     (c), a
-        ld      c, 0x00
-        out     (c), c
+
+        ; Change paper color (pen 0)
+        out     (c), 0                  ; Undocumented z80 op-code
         out     (c), a
 
         inc     de
