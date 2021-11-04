@@ -7,11 +7,9 @@
 
         section CODE_0
 initPalette:
-        di
         ld      (palettes), hl
         ld      (palettes+2), de
         call    setPalette
-        ei
         ret
 
         ; Alternate between the two palettes
