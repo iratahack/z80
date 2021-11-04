@@ -124,11 +124,6 @@ ENDIF
         ; No more BIOS calls from here!!!
         di
 
-        ; Disable ROMs
-        ld      c, 0x8c | CRT_SCREEN_MODE
-        ld      b, bank_io_hi
-        out     (c), c
-
 IF  CRT_INITIALIZE_BSS
         call    bssInit
 ENDIF
