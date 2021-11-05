@@ -1,4 +1,4 @@
-; CPC PSG proPLAYER V 0.47c - WYZ 19.03.2016
+; PSG proPLAYER V 0.47c - WYZ 19.03.2016
 ; (WYZTracker 2.0 o superior)
 
 ; ENSAMBLAR CON AsMSX
@@ -11,6 +11,7 @@
 
         defc    PSG_NUM_REG=14
         defc    CHANNEL_BUFF_SIZE=0x10
+
 wyz_player_init:
 WYZPLAYER_INIT:
         CALL    PLAYER_OFF
@@ -60,6 +61,7 @@ INICIA_SONIDO:
 ; IN
 ; A = NUMERO DE SONIDO
 ; B = CANAL
+wyz_play_fx:
 INICIA_EFECTO:
         LD      HL, TABLA_SONIDOS
         CALL    EXT_WORD
@@ -172,56 +174,12 @@ FIN_SONIDO:
         LD      A, (ENVOLVENTE_BACK)    ;NO RESTAURA LA ENVOLVENTE SI ES 0
         AND     A
         JR      Z, FIN_NOPLAYER
- ;xor a ; ***
         LD      (PSG_REG_SEC+13), A     ;08.13 RESTAURA LA ENVOLVENTE TRAS EL SFX
 
 FIN_NOPLAYER:
         LD      A, 10111000B
         LD      (PSG_REG_SEC+7), A
         XOR     A
-        RET
-
-;VUELCA BUFFER DE SONIDO AL PSG
-ROUT:
-        LD      A, (PSG_REG+13)
-        AND     A                       ;ES CERO?
-        JR      Z, NO_BACKUP_ENVOLVENTE
-        LD      (ENVOLVENTE_BACK), A    ;08.13 / GUARDA LA ENVOLVENTE EN EL BACKUP
-        XOR     A
-
-NO_BACKUP_ENVOLVENTE:
-;VUELCA BUFFER DE SONIDO AL PSG
-        LD      HL, PSG_REG_SEC
-LOUT:
-        CALL    WRITEPSGHL
-        INC     A
-        CP      13
-        JR      NZ, LOUT
-        LD      A, (HL)
-        AND     A
-        RET     Z
-        LD      A, 13
-        CALL    WRITEPSGHL
-        XOR     A
-        LD      (PSG_REG+13), A
-        LD      (PSG_REG_SEC+13), A
-        RET
-
-;; A = REGISTER
-;; (HL) = VALUE
-WRITEPSGHL:
-        LD      B, $F4
-        OUT     (C), A
-        LD      BC, $F6C0
-        OUT     (C), C
-        DB      $ED                     ; Undocumented op-code out(c), 0
-        DB      $71
-        LD      B, $F5
-        OUTI
-        LD      BC, $F680
-        OUT     (C), C
-        DB      $ED                     ; Undocumented op-code out(c), 0
-        DB      $71
         RET
 
 ;PLAYER OFF
@@ -289,7 +247,6 @@ DECODE_SONG:
 NPTJP0:
         AND     00000110B
         RRA
- ;LD (SELECT_CANAL_P),A
 
         PUSH    DE
         LD      HL, TABLA_DATOS_CANAL_SFX
@@ -433,15 +390,7 @@ NO_PUNTILLO:
         INC     HL
         INC     DE
         LDI                             ;N� DE INSTRUMENTO
- ; LD A,(HL)
- ; LD (DE),A
- ; INC DE
- ; INC HL
         LDI                             ;VOLUMEN RELATIVO DEL INSTRUMENTO
- ; LD A,(HL)
- ; LD (DE),A
- ; INC DE
- ; INC HL
         JR      DECODE_CANAL
 
 NO_INSTRUMENTO:
@@ -452,10 +401,6 @@ NO_INSTRUMENTO:
         INC     DE
         INC     HL
         LDI
- ; LD A,(HL)
- ; LD (DE),A
- ; INC DE
- ; INC HL
         JR      DECODE_CANAL
 
 NO_ENVOLVENTE:
@@ -544,10 +489,6 @@ PAUTAS:
         LD      IX, PUNTERO_P_C
         LD      HL, PSG_REG+10
         JP      PAUTA                   ;PAUTA CANAL C
-
-
-
-
 
 ;LOCALIZA NOTA CANAL A
 ;IN (PUNTERO_A)
@@ -722,7 +663,6 @@ FIN_RUTINA:
 
 ;LOCALIZA EFECTO
 ;IN HL=(PUNTERO_P)
-
 LOCALIZA_EFECTO:
         LD      L, (IX+0)               ;HL=(PUNTERO_P)
         LD      H, (IX+1)
@@ -736,7 +676,6 @@ LOCALIZA_EFECTO:
         LD      (IX+00), L
         LD      (IX+01), H
         JP      INICIA_SONIDO
-
 
 LEJP0:
         INC     HL
@@ -773,7 +712,6 @@ NO_FIN_CANAL_P:
 ; FORMATO PAUTA
 ; 7 6 5 4 3-0 3-0
 ; BYTE 1 (LOOP|OCT-1|OCT+1|ORNMT|VOL) - BYTE 2 ( | | | |PITCH/NOTA)
-
 PAUTA:
         BIT     4, (HL)                 ;SI LA ENVOLVENTE ESTA ACTIVADA NO ACTUA PAUTA
         RET     NZ
@@ -824,9 +762,6 @@ PCAJP1:
         RL      D
         LD      (IY+0), E
         LD      (IY+1), D
-
-
-
 
 PCAJP2:
         LD      A, (HL)
@@ -896,13 +831,9 @@ PCAJP7:
         LD      (HL), A
         RET
 
-
-
 ;NOTA -  REPRODUCE UNA NOTA
 ;IN (A)=CODIGO DE LA NOTA
 ; (IY)=REGISTROS DE FRECUENCIA
-
-
 NOTA:
         LD      L, C
         LD      H, B
@@ -917,12 +848,8 @@ TABLA_NOTAS:
         LD      (IY+1), D
         RET
 
-
-
-
 ;IN (A)=CODIGO DE LA ENVOLVENTE
 ; (IY)=REGISTRO DE FRECUENCIA
-
 EVOLVENTES:
         LD      HL, DATOS_NOTAS
  ;SUB 12
@@ -978,12 +905,10 @@ CRTBC0:
         LD      (ENVOLVENTE_BACK), A
         RET
 
-
 ;EXTRAE UN WORD DE UNA TABLA
 ;IN:(HL)=DIRECCION TABLA
 ; (A)= POSICION
 ;OUT(DE)=WORD
-
 EXT_WORD:
         LD      D, 0
         RLCA
@@ -994,18 +919,11 @@ EXT_WORD:
         LD      D, (HL)
         RET
 
-        section RODATA_0
 ;TABLA DE DATOS DEL SELECTOR DEL CANAL DE EFECTOS DE RITMO
 
 TABLA_DATOS_CANAL_SFX:
 
         DW      SELECT_CANAL_A, SELECT_CANAL_B, SELECT_CANAL_C
-
-
-;BYTE 0:SFX_L
-;BYTE 1:SFX_H
-;BYTE 2:SFX_V
-;BYTE 3:SFX_MIX
 
 SELECT_CANAL_A:
         DW      PSG_REG_SEC+0, PSG_REG_SEC+1, PSG_REG_SEC+8
@@ -1018,141 +936,3 @@ SELECT_CANAL_B:
 SELECT_CANAL_C:
         DW      PSG_REG_SEC+4, PSG_REG_SEC+5, PSG_REG_SEC+10
         DB      10011100B
-
-
-;____________________________________
-
-        section BSS_0
-
-INTERR: DB      0                       ;INTERRUPTORES 1=ON 0=OFF
- ;BIT 0=CARGA CANCION ON/OFF
- ;BIT 1=PLAYER ON/OFF
- ;BIT 2=EFECTOS ON/OFF
- ;BIT 3=SFX ON/OFF
- ;BIT 4=LOOP
-;CONTROL DE LAS INTERRUPCIONES
-
-;HOOK: DB 0
-
-;MUSICA **** EL ORDEN DE LAS VARIABLES ES FIJO ******
-
-
-
-SONG:   DB      0                       ;DBN� DE CANCION
-TEMPO:  DB      0                       ;DB TEMPO
-TTEMPO: DB      0                       ;DB CONTADOR TEMPO
-
-PUNTERO_A:
-        DW      0                       ;DW PUNTERO DEL CANAL A
-PUNTERO_B:
-        DW      0                       ;DW PUNTERO DEL CANAL B
-PUNTERO_C:
-        DW      0                       ;DW PUNTERO DEL CANAL C
-
-CANAL_A:
-        DW      0                       ;DW DIRECION DE INICIO DE LA MUSICA A
-CANAL_B:
-        DW      0                       ;DW DIRECION DE INICIO DE LA MUSICA B
-CANAL_C:
-        DW      0                       ;DW DIRECION DE INICIO DE LA MUSICA C
-
-PUNTERO_P_A:
-        DW      0                       ;DW PUNTERO PAUTA CANAL A
-PUNTERO_P_B:
-        DW      0                       ;DW PUNTERO PAUTA CANAL B
-PUNTERO_P_C:
-        DW      0                       ;DW PUNTERO PAUTA CANAL C
-
-PUNTERO_P_A0:
-        DW      0                       ;DW INI PUNTERO PAUTA CANAL A
-PUNTERO_P_B0:
-        DW      0                       ;DW INI PUNTERO PAUTA CANAL B
-PUNTERO_P_C0:
-        DW      0                       ;DW INI PUNTERO PAUTA CANAL C
-
-PUNTERO_P_DECA:
-        DW      0                       ;DW PUNTERO DE INICIO DEL DECODER CANAL A
-PUNTERO_P_DECB:
-        DW      0                       ;DW PUNTERO DE INICIO DEL DECODER CANAL B
-PUNTERO_P_DECC:
-        DW      0                       ;DW PUNTERO DE INICIO DEL DECODER CANAL C
-
-PUNTERO_DECA:
-        DW      0                       ;DW PUNTERO DECODER CANAL A
-PUNTERO_DECB:
-        DW      0                       ;DW PUNTERO DECODER CANAL B
-PUNTERO_DECC:
-        DW      0                       ;DW PUNTERO DECODER CANAL C
-
-REG_NOTA_A:
-        DB      0                       ;DB REGISTRO DE LA NOTA EN EL CANAL A
-VOL_INST_A:
-        DB      0                       ;DB VOLUMEN RELATIVO DEL INSTRUMENTO DEL CANAL A
-REG_NOTA_B:
-        DB      0                       ;DB REGISTRO DE LA NOTA EN EL CANAL B
-VOL_INST_B:
-        DB      0                       ;DB VOLUMEN RELATIVO DEL INSTRUMENTO DEL CANAL B ;VACIO
-REG_NOTA_C:
-        DB      0                       ;DB REGISTRO DE LA NOTA EN EL CANAL C
-VOL_INST_C:
-        DB      0                       ;DB VOLUMEN RELATIVO DEL INSTRUMENTO DEL CANAL C
-
-PUNTERO_L_DECA:
-        DW      0                       ;DW PUNTERO DE INICIO DEL LOOP DEL DECODER CANAL A
-PUNTERO_L_DECB:
-        DW      0                       ;DW PUNTERO DE INICIO DEL LOOP DEL DECODER CANAL B
-PUNTERO_L_DECC:
-        DW      0                       ;DW PUNTERO DE INICIO DEL LOOP DEL DECODER CANAL C
-
-;CANAL DE EFECTOS DE RITMO - ENMASCARA OTRO CANAL
-
-PUNTERO_P:
-        DW      0                       ;DW PUNTERO DEL CANAL EFECTOS
-CANAL_P:
-        DW      0                       ;DW DIRECION DE INICIO DE LOS EFECTOS
-PUNTERO_P_DECP:
-        DW      0                       ;DW PUNTERO DE INICIO DEL DECODER CANAL P
-PUNTERO_DECP:
-        DW      0                       ;DW PUNTERO DECODER CANAL P
-PUNTERO_L_DECP:
-        DW      0                       ;DW PUNTERO DE INICIO DEL LOOP DEL DECODER CANAL P
-;SELECT_CANAL_P DB INTERR+$36 ;DB SELECCION DE CANAL DE EFECTOS DE RITMO
-
-
-SFX_L:  DW      0                       ;DW DIRECCION BUFFER EFECTOS DE RITMO REGISTRO BAJO
-SFX_H:  DW      0                       ;DW DIRECCION BUFFER EFECTOS DE RITMO REGISTRO ALTO
-SFX_V:  DW      0                       ;DW DIRECCION BUFFER EFECTOS DE RITMO REGISTRO VOLUMEN
-SFX_MIX:
-        DW      0                       ;DW DIRECCION BUFFER EFECTOS DE RITMO REGISTRO MIXER
-
-
-;EFECTOS DE SONIDO
-
-N_SONIDO:
-        DB      0                       ;DB : NUMERO DE SONIDO
-PUNTERO_SONIDO:
-        DW      0                       ;DW : PUNTERO DEL SONIDO QUE SE REPRODUCE
-
-
-
-;DB (13) BUFFERs DE REGISTROS DEL PSG
-
-PSG_REG:
-        DS      PSG_NUM_REG
-PSG_REG_SEC:
-        DS      PSG_NUM_REG
-ENVOLVENTE:
-        DB      0                       ;DB : FORMA DE LA ENVOLVENTE
- ;BIT 0 : FRECUENCIA CANAL ON/OFF
- ;BIT 1-2 : RATIO
- ;BIT 3-3 : FORMA
-ENVOLVENTE_BACK:
-        DB      0                       ;DB: BACKUP DE LA FORMA DE LA ENVOLENTE
-BUFFER_DEC:
-        ds      CHANNEL_BUFF_SIZE*4
-SONIDO_REGS:
-        ds      2
-EFECTO_REGS:
-        ds      2
-PUNTERO_EFECTO:
-        ds      2
