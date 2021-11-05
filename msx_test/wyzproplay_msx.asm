@@ -5,19 +5,20 @@
         public  wyz_play_sound
         public  wyz_player_init
         public  wyz_player_stop
-	public	_music
+        public  _music
 
+        section code_user
 _music:
-	call	wyz_player_init
+        call    wyz_player_init
 
 
-	ld	a, 0
-	call	wyz_play_song
+        ld      a, 0
+        call    wyz_play_song
 
 loop:
-	halt
-	call	wyz_play_frame
-	jp	loop
+        halt
+        call    wyz_play_frame
+        jp      loop
 
 
         include "wyzproplay47c_common.inc"
@@ -48,11 +49,13 @@ LOUT:   OUT     (C), A
         LD      (PSG_REG+13), A
         RET
 
+        section rodata_user
         ;
         ; Song table setup
         ;
         include "wyzsongtable.inc"
 
+        section bss_user
         ;
         ; RAM variables
         ;
