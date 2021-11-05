@@ -560,6 +560,7 @@ COM_EFECTO:
         INC     HL
         LD      (IX+PUNTERO_A-PUNTERO_A), L
         LD      (IX+PUNTERO_A-PUNTERO_A+1), H
+        LD      B, 1                    ; Select channel #1
         JP      INICIA_SONIDO
 
 COM_ENVOLVENTE:
@@ -675,6 +676,7 @@ LOCALIZA_EFECTO:
         INC     HL
         LD      (IX+00), L
         LD      (IX+01), H
+        LD      B, 1                    ; Select channel #1
         JP      INICIA_SONIDO
 
 LEJP0:
