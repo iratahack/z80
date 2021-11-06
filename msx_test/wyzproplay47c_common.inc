@@ -63,15 +63,18 @@ INICIA_SONIDO:
 ; B = CANAL
 wyz_play_fx:
 INICIA_EFECTO:
+        LD      C, A                    ; Save index
+        LD      A, B
+        LD      HL, TABLA_DATOS_CANAL_SFX
+        CALL    EXT_WORD
+        LD      (EFECTO_REGS), DE
+        LD      A, C                    ; Restore index
+INICIA_EFECTO2:
         LD      HL, TABLA_SONIDOS
         CALL    EXT_WORD
         LD      (PUNTERO_EFECTO), DE
         LD      HL, INTERR
         SET     3, (HL)
-        LD      A, B
-        LD      HL, TABLA_DATOS_CANAL_SFX
-        CALL    EXT_WORD
-        LD      (EFECTO_REGS), DE
         RET
 
 ;REPRODUCE EFECTOS DE SONIDO
@@ -251,7 +254,7 @@ NPTJP0:
         PUSH    DE
         LD      HL, TABLA_DATOS_CANAL_SFX
         CALL    EXT_WORD
-        LD      (SONIDO_REGS), DE
+        LD      (EFECTO_REGS), DE
         POP     HL
 
         INC     HL                      ;2 BYTES RESERVADOS
@@ -560,8 +563,7 @@ COM_EFECTO:
         INC     HL
         LD      (IX+PUNTERO_A-PUNTERO_A), L
         LD      (IX+PUNTERO_A-PUNTERO_A+1), H
-        LD      B, 1                    ; Select channel #1
-        JP      INICIA_SONIDO
+        JP      INICIA_EFECTO2
 
 COM_ENVOLVENTE:
         BIT     2, A
@@ -676,8 +678,7 @@ LOCALIZA_EFECTO:
         INC     HL
         LD      (IX+00), L
         LD      (IX+01), H
-        LD      B, 1                    ; Select channel #1
-        JP      INICIA_SONIDO
+        JP      INICIA_EFECTO2
 
 LEJP0:
         INC     HL
