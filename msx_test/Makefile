@@ -1,11 +1,14 @@
 PROJ=test
 
-.PHONY: all clean
+.PHONY: all clean run
 
-all: $(PROJ).img
+all: $(PROJ).rom
 
-%.img: %.c wyzproplay_msx.asm
-	zcc +msx -m -subtype=disk -o $@ $+ -create-app 
+%.rom: %.c wyzproplay_msx.asm
+	zcc +msx -m -lmsxbios -subtype=rom -o $(PROJ).bin $+ -create-app
+
+run: all
+	openmsx -machine msx1 -carta $(PROJ).rom
 
 clean:
-	rm -f *.map *.msx *.img
+	rm -f *.map *.bin *.rom
