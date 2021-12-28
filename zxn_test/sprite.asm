@@ -2,7 +2,7 @@
         org     0x8000
 _main:
         di
-        ld      sp, 0x8000              ; Set stack pointer
+        ld      sp, _main               ; Set stack pointer
         ei
 
         nextreg 0x07, 0x00              ; CPU speed (0=3.5Mhz, 1=7Mhz, 2=14 Mhz )
@@ -17,12 +17,11 @@ _main:
         nextreg 0x43, 0x10              ; Layer 2 of 1st palette
 
         nextreg 0x40, 0x00              ; Palette index 0
-        ld      b, 0x00
         xor     a
 paletteLoop:
         nextreg 0x41, a
         inc     a
-        djnz    paletteLoop
+        jr      nz, paletteLoop
 
         nextreg 0x16, 0x00              ; Set X scroll to 0
         nextreg 0x17, 0x00              ; Set Y scroll to 0
@@ -58,9 +57,9 @@ fill:
         ld      hl, 0x0000
         ld      bc, 0x4000
 nxt:
-        dec     bc
-        ld      (hl), c
+        ld      (hl), l
         inc     hl
+        dec     bc
         ld      a, b
         or      c
         jr      nz, nxt
@@ -142,16 +141,12 @@ sprite:
         nextreg 0x40, 0x00
 
         ld      de, marioPalette        ; get the a pointer to the palette data
-        ld      h, marioColours         ; do the number of colours times
+        ld      b, marioColours         ; do the number of colours times
 Docolours:
         ld      a, (de)                 ; get the colour from the palette array
-        nextreg 0x41, a
-
         inc     de                      ; next element in the array
-        dec     h                       ; decrement the amount of colours left to do
-        ld      a, -1                   ; last colour check
-        cp      h                       ; have we done all the colours?
-        jp      nz, Docolours           ; nope next colour
+        nextreg 0x41, a
+        djnz    Docolours
 
         ; now set the Transparency index for sprites
         ; setting the transparency index to palette element 0
@@ -161,27 +156,40 @@ Docolours:
         ; end of sprite and palette test code
         ;-------------------------------------
 
-        ld      h, 50
+        ld      de, 0x0120
+        ld      bc, 0x303b              ; get the port in the b,c register
+resetXPos:
+        ld      hl, 0x0010
 MainLoop:
         halt
+
         xor     a                       ; select sprite 0
-        ld      bc, 0x303b              ; get the port in the b,c register
         out     (c), a                  ; send the zero to port 0x303b to select the sprite
         ; Auto incrementing pointer so we dont have to keep setting 0x303b
         ; Sprite Attribute 0
         ; bits 7-0 = LSB of X coordinate
-        inc     h
-        ld      a, h                    ; x position
+        inc     hl
+        ld      a, l                    ; x position
         out     (0x57), a               ; send the x position to attribute 0 via port 0x57
         ; Sprite Attribute 1
         ; bits 7-0 = LSB of Y coordinate
         ld      a, 32                   ; y position
         out     (0x57), a               ; send the y position to attribute 1 via port 0x57
 
-        jp      MainLoop                ; do the whole thing black and blue again and again
+        ld      a, h                    ; Bit 8 of x position
+        and     0x01
+        out     (0x57), a               ; send the y position to attribute 2 via port 0x57
+
+
+        push    hl
+        xor     a                       ; clear carry flag
+        sbc     hl, de
+        pop     hl
+        jr      c, MainLoop
+        jp      resetXPos
 
 ; Created by NextGraphics.exe on Friday, 25 September 2020 @ 14:10:22
-marioColours    equ 149
+        defc    marioColours=marioPaletteEnd-marioPalette
 
         section rodata_user
 
@@ -336,7 +344,7 @@ marioPalette:
         db      %01001001               ; Colour 92 is 0x49 = 99,91,28
         db      %01001001               ; Colour 93 is 0x49 = 78,80,6
         db      %01101101               ; Colour 94 is 0x6d = 127,132,70
-
+marioPaletteEnd:
 ;mario0 is from frame 0 at position x=0  y=0
 mario0:
         db      0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
