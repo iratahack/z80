@@ -1,18 +1,85 @@
         public  _main
-        org     0x8000
+
+        include "defines.asm"
+
+        org     0x8184
 _main:
+        ; Configure stack and interrupts
         di
-        ld      sp, _main               ; Set stack pointer
+        ld      sp, stack               ; Set stack pointer
+
+        ld      hl, 0x8000
+        ld      de, 0x8001
+        ld      (hl), 0x81
+        ld      bc, 0x100
+        ldir
+
+        ld      a, 0xc3                 ; jp opcode
+        ld      (0x8181), a
+        ld      hl, isr
+        ld      (0x8182), hl
+
+        ld      a, 0x80                 ; Vector table 15:8
+        ld      i, a
+        im      2
         ei
 
         nextreg 0x07, 0x00              ; CPU speed (0=3.5Mhz, 1=7Mhz, 2=14 Mhz )
 
+        include "setPorts.asm"
+
+        ; Tilemap clipping
+        nextreg 0x1b, 16                ; X1 value internally doubled
+        nextreg 0x1b, 159-16            ; X2 value internally doubled
+        nextreg 0x1b, 32                ; Y1
+        nextreg 0x1b, 223               ; Y2
+
 	; Clear ULA bitmap area
-        ld      hl, 0x4000
+        ld      hl, screen
         ld      (hl), 0
-        ld      de, 0x4001
+        ld      de, screen+1
         ld      bc, 6912-1
         ldir
+
+        ; Clear the tilemap area
+        ld      hl, tilemap
+        ld      (hl), 11                ; Blank tile
+        ld      de, tilemap+1
+        ld      bc, 40*32
+        ldir
+
+        ; Setup the palette for the tilemap
+        nextreg 0x40, 0x00              ; Palette index 0
+        ld      hl, pal
+        ld      b, 16
+palLoop:
+        ld      a, (hl)
+        inc     hl
+        nextreg 0x41, a
+        djnz    palLoop
+
+        ; Load the tiles
+        ld      de, tilemap+1280        ; If not including attribute byte in tile map
+        ld      hl, tile0
+        ld      bc, tiles_end-tile0
+        ldir
+
+        ld      hl, tilemap+160+4
+        xor     a
+        ld      c, 16
+yloop:
+        ld      b, 16
+xloop:
+        ld      (hl), a
+        inc     hl
+        inc     a
+        djnz    xloop
+        add     hl, 24
+        dec     c
+        jr      nz, yloop
+
+;        jp $
+
 
         call    sprite
 
@@ -102,14 +169,16 @@ mainLoop:
         halt
         call    animateSprites
 
+IF  1
         ; Check for collision
         ld      bc, 0x303b
         in      a, (c)
         and     0x01
+;        jr      nz, $
         rlca
         or      0x8
         out     (0xfe), a
-
+ENDIF
         ld      ix, spriteList
         inc     (ix+attrib0)
         nextreg 0x34, 0
@@ -260,8 +329,14 @@ nextColor:
         djnz    nextColor               ; next color
         ret
 
-        section rodata_user
+        ; ISR do nothing for now
+isr:
+        ei
+        reti
 
+        section rodata_user
+        ds      0x80
+stack:
         defvars 0
         {
             spriteIndex ds.b 1
@@ -281,7 +356,7 @@ nextColor:
 spriteList:
         db      0x00                    ; Sprite index
         db      50                      ; Attribute 0
-        db      0x80                    ; Attribute 1
+        db      150                     ; Attribute 1
         db      0x00                    ; Attribute 2
         db      0xc0                    ; Attribute 3
         db      0x00                    ; Attribute 4
@@ -293,7 +368,7 @@ spriteList:
 
         db      0x01                    ; Sprite index
         db      100                     ; Attribute 0
-        db      0x80                    ; Attribute 1
+        db      150+14                  ; Attribute 1
         db      0x00                    ; Attribute 2
         db      0xc1                    ; Attribute 3
         db      0x00                    ; Attribute 4
@@ -360,3 +435,5 @@ palette:
         db      0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf
         db      0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef
         db      0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
+
+        include "CastleEscape.asm"
