@@ -1,32 +1,27 @@
         public  _main
 
-        include "defines.asm"
+        include "defines.inc"
 
-        org     0x8184
+        section BANK_2
+        org     0x8000
+        section CODE_2
+vectors:
+        ds      0x101, 0x81
+        ds      0x80, 0x55
+stack:
+        jp      isr
+
 _main:
-        ; Configure stack and interrupts
-        di
+        nextreg 0x07, 0x00              ; CPU speed (0=3.5Mhz, 1=7Mhz, 2=14 Mhz )
+
         ld      sp, stack               ; Set stack pointer
 
-        ld      hl, 0x8000
-        ld      de, 0x8001
-        ld      (hl), 0x81
-        ld      bc, 0x100
-        ldir
-
-        ld      a, 0xc3                 ; jp opcode
-        ld      (0x8181), a
-        ld      hl, isr
-        ld      (0x8182), hl
-
-        ld      a, 0x80                 ; Vector table 15:8
+        ld      a, 0x80                 ; Vector table bits 15:8
         ld      i, a
         im      2
         ei
 
-        nextreg 0x07, 0x00              ; CPU speed (0=3.5Mhz, 1=7Mhz, 2=14 Mhz )
-
-        include "setPorts.asm"
+        include "setPorts.inc"
 
         ; Tilemap clipping
         nextreg 0x1b, 16                ; X1 value internally doubled
@@ -34,7 +29,7 @@ _main:
         nextreg 0x1b, 32                ; Y1
         nextreg 0x1b, 223               ; Y2
 
-	; Clear ULA bitmap area
+	; Clear ULA bitmap and attribute area
         ld      hl, screen
         ld      (hl), 0
         ld      de, screen+1
@@ -43,9 +38,9 @@ _main:
 
         ; Clear the tilemap area
         ld      hl, tilemap
-        ld      (hl), 11                ; Blank tile
+        ld      (hl), 0x0b              ; Blank tile
         ld      de, tilemap+1
-        ld      bc, 40*32
+        ld      bc, 40*32-1
         ldir
 
         ; Setup the palette for the tilemap
@@ -59,30 +54,34 @@ palLoop:
         djnz    palLoop
 
         ; Load the tiles
-        ld      de, tilemap+1280        ; If not including attribute byte in tile map
-        ld      hl, tile0
-        ld      bc, tiles_end-tile0
+;        ld      de, tilemap+1280        ; If not including attribute byte in tile map
+;        ld      hl, tile0
+;        ld      bc, tiles_end-tile0
+;        ldir
+
+        ; Display a tile map
+        ld      hl, levels
+        ld      de, tilemap+4+40*7
+        ld      b, 24
+yloop:
+        push    bc
+
+        ld      bc, 32
         ldir
 
-        ld      hl, tilemap+160+4
-        xor     a
-        ld      c, 16
-yloop:
-        ld      b, 16
-xloop:
-        ld      (hl), a
-        inc     hl
-        inc     a
-        djnz    xloop
-        add     hl, 24
-        dec     c
-        jr      nz, yloop
+        add     de, 8
+        add     hl, 128-32
+
+        pop     bc
+        djnz    yloop
+
 
 ;        jp $
 
 
-        call    sprite
+        jp      sprite
 
+IF  0
         nextreg 0x43, 0x10              ; Layer 2 of 1st palette
 
         nextreg 0x40, 0x00              ; Palette index 0
@@ -131,6 +130,7 @@ nxt:
         or      c
         jr      nz, nxt
         ret
+ENDIF
 
 sprite:
 ; The following code was copied from https://luckyredfish.com/getting-a-sprite-up-on-a-spectrum-next/
@@ -142,7 +142,7 @@ sprite:
 
         call    setupSprites
 
-        nextreg 0x34, 0x00
+        nextreg 0x34, 0x00              ; Select sprite index 0
 
         ; Write sprite pattern data
         ld      hl, sprite0
@@ -334,9 +334,7 @@ isr:
         ei
         reti
 
-        section rodata_user
-        ds      0x80
-stack:
+        section RODATA
         defvars 0
         {
             spriteIndex ds.b 1
@@ -436,4 +434,20 @@ palette:
         db      0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef
         db      0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 
-        include "CastleEscape.asm"
+
+pal_count   EQU 16
+pal:
+        db      0xe3, 0x03, 0x03, 0x18
+        db      0x1b, 0x1f, 0xc0, 0xd8
+        db      0xdb, 0xe0, 0xe7, 0xfc
+        db      0xff, 0x00, 0x00, 0x00
+
+        section BANK_5
+        org     0x6000
+        section RODATA_5
+        include "tiles.inc"
+        section BANK_0
+        org     0xc000
+        section RODATA_0
+levels:
+        include "levels.inc"
