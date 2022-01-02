@@ -20,8 +20,6 @@ ulaattr equ     $5800
 tilemap equ     $5b00
 
 tileMapDefAddr  equ tilemap+1280        ; start address of tile map definitons
-;tileMapDefAddr:	 equ tilemap+2560 	; start address of tile map definitons
-
 
 characterData   equ $3D00               ; start address of characterData
 screenAddresstoPrint    equ 20489       ; address where 'Central Cavern' title will be printed

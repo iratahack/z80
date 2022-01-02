@@ -24,10 +24,14 @@ _main:
         include "setPorts.inc"
 
         ; Tilemap clipping
-        nextreg 0x1b, 16                ; X1 value internally doubled
-        nextreg 0x1b, 159-16            ; X2 value internally doubled
-        nextreg 0x1b, 32                ; Y1
-        nextreg 0x1b, 223               ; Y2
+        ; X1 value internally doubled
+        nextreg IO_TileMapClipWindow, 16
+        ; X2 value internally doubled
+        nextreg IO_TileMapClipWindow, 159-16
+        ; Y1
+        nextreg IO_TileMapClipWindow, 32
+        ; Y2
+        nextreg IO_TileMapClipWindow, 223
 
 	; Clear ULA bitmap and attribute area
         ld      hl, screen
@@ -45,19 +49,13 @@ _main:
 
         ; Setup the palette for the tilemap
         nextreg 0x40, 0x00              ; Palette index 0
-        ld      hl, pal
-        ld      b, 16
+        ld      hl, tile_palette
+        ld      b, tile_palette_count
 palLoop:
         ld      a, (hl)
         inc     hl
         nextreg 0x41, a
         djnz    palLoop
-
-        ; Load the tiles
-;        ld      de, tilemap+1280        ; If not including attribute byte in tile map
-;        ld      hl, tile0
-;        ld      bc, tiles_end-tile0
-;        ldir
 
         ; Display a tile map
         ld      hl, levels
@@ -319,9 +317,11 @@ setPalette:
         ; bit 2 = Select Layer 2 palette (0 = first palette, 1 = second palette)
         ; bit 1 = Select ULA palette (0 = first palette, 1 = second palette)
         ; bit 0 = Enabe ULANext mode if 1. (0 after a reset)
-        nextreg 0x43, 0x20
 
-        nextreg 0x40, a                 ; First palette index
+        ; Sprites first palette
+        nextreg IO_TileMapPaletteContr, 0x20
+
+        nextreg 0x40, a                 ; Palette index
 nextColor:
         ld      a, (hl)                 ; get the colour from the palette array
         inc     hl                      ; next element in the array
@@ -334,7 +334,7 @@ isr:
         ei
         reti
 
-        section RODATA
+        section RODATA_2
         defvars 0
         {
             spriteIndex ds.b 1
@@ -435,17 +435,15 @@ palette:
         db      0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 
 
-pal_count   EQU 16
-pal:
-        db      0xe3, 0x03, 0x03, 0x18
-        db      0x1b, 0x1f, 0xc0, 0xd8
-        db      0xdb, 0xe0, 0xe7, 0xfc
-        db      0xff, 0x00, 0x00, 0x00
+tile_palette_count  EQU 16
+tile_palette:
+        db      0xe3, 0x03, 0x03, 0x18, 0x1b, 0x1f, 0xc0, 0xd8, 0xdb, 0xe0, 0xe7, 0xfc, 0xff, 0x00, 0x00, 0x00
 
         section BANK_5
         org     0x6000
         section RODATA_5
         include "tiles.inc"
+
         section BANK_0
         org     0xc000
         section RODATA_0

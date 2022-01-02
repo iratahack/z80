@@ -77,7 +77,7 @@
  	; bit 1 = Select ULA palette (0 = first palette, 1 = second palette)
   	; bit 0 = Enabe ULANext mode if 1. (0 after a reset)
 
-        nextreg IO_TileMapPaletteContr, %000110000
+        nextreg IO_TileMapPaletteContr, %00110000	; Tilemap first palette
 
 ;*___________________________________________________________________________________________________________________________________
 
@@ -93,12 +93,6 @@
         nextreg IO_ULAControl, %00000000
 
 ;*___________________________________________________________________________________________________________________________________
-
-
-        nextreg IO_TileMapClipWindow, 0
-        nextreg IO_TileMapClipWindow, 159
-        nextreg IO_TileMapClipWindow, 0
-        nextreg IO_TileMapClipWindow, 255
 
         nextreg IO_TileMapOffSetXMSB, 0
         nextreg IO_TileMapOffSetXLSB, 0
