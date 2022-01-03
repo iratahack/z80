@@ -1,4 +1,4 @@
-	public	sprite0
+        public  sprite0
 
-	section	RODATA_2
-	include "knight.inc"
+        section RODATA_2
+        include "knight.inc"

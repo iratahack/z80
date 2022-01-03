@@ -1,24 +1,15 @@
-CC=zcc
 AS=z88dk-asmpp
 LD=z88dk-z80asm
 
 TARGET= +zxn
 PROJECT_NAME=sprite
-ASMSRC=sprite.asm tiles.asm levels.asm
-CSRC=$(wildcard *.c)
+ASMSRC=sprite.asm tiles.asm levels.asm knight.asm
 ZXSTLC=./tools/zxstlc_linux
-
-CFLAGS=$(TARGET) -O2 -c \
-		--codeseg=CODE_4 \
-		--constseg=RODATA_4 \
-		--dataseg=DATA_4 \
-		--bssseg=BSS_4 \
-		-clib=new
 
 LDFLAGS=-mz80n -m -b
 ASFLAGS=-mz80n
 DISFLAGS=-mz80n
-OBJECTS=$(CSRC:.c=.o) $(ASMSRC:.asm=.o)
+OBJECTS=$(ASMSRC:.asm=.o)
 
 # Default to the CODE bank if no other is specified
 BANK ?= BANK_5
