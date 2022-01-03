@@ -1,17 +1,67 @@
-PROJECT_NAME=sprite
+CC=zcc
+AS=z88dk-asmpp
+LD=z88dk-z80asm
 
-all: ${PROJECT_NAME}.bin
+TARGET= +zxn
+PROJECT_NAME=sprite
+ASMSRC=sprite.asm tiles.asm levels.asm
+CSRC=$(wildcard *.c)
+ZXSTLC=./tools/zxstlc_linux
+
+CFLAGS=$(TARGET) -O2 -c \
+		--codeseg=CODE_4 \
+		--constseg=RODATA_4 \
+		--dataseg=DATA_4 \
+		--bssseg=BSS_4 \
+		-clib=new
+
+LDFLAGS=-mz80n -m -b
+ASFLAGS=-mz80n
+DISFLAGS=-mz80n
+OBJECTS=$(CSRC:.c=.o) $(ASMSRC:.asm=.o)
+
+# Default to the CODE bank if no other is specified
+BANK ?= BANK_5
+# Find the start addres of the BANK and replace $ with 0x
+HEAD=$(shell grep __$(BANK)_head *.map | awk '{gsub("^.", "0x", $$3); print $$3}')
+
+.PHONY: all clean run dis
+
+all: $(PROJECT_NAME).bin
 
 clean:
-	rm -f *.bin *.tap *.map *.[io]
+	rm -f *.[oid] *.tap *.bin *.map *.dsk
 
-run: ${PROJECT_NAME}.tap
-	zesarux --machine TBBlue --tape sprite.tap --configfile .zesaruxrc --tbblue-fast-boot-mode  --nosplash --nowelcomemessage --quickexit
+run: $(PROJECT_NAME).tap
+	~/ZEsarUX-10.0/zesarux $<
 
-sprite_BANK_2.bin: sprite.asm defines.inc tiles.inc setPorts.inc
-	z88dk-asmpp -mz80n -m -b sprite.asm
+rundsk: $(PROJECT_NAME).dsk
+	fuse $<
 
-${PROJECT_NAME}.bin: ${PROJECT_NAME}_BANK_2.bin
+dis: $(PROJECT_NAME).bin
+	z88dk-dis $(DISFLAGS) -o $(HEAD) -x $(PROJECT_NAME).map $(PROJECT_NAME).bin | less
+
+ifeq (,$(findstring $(MAKECMDGOALS),clean))
+%.d: %.asm
+	@./mkdep.sh $< > $@
+
+%.d: %.c
+	@./mkdep.sh $< > $@
+endif
+
+%.o: %.c
+	@echo "Compiling $<"
+	@$(CC) $(CFLAGS) -o $@ $<
+
+%.o: %.asm
+	@echo "Assembling $<"
+	@$(AS) $(ASFLAGS) $<
+
+$(PROJECT_NAME)_BANK_2.bin: $(OBJECTS)
+	@echo "Linking $@"
+	$(LD) $(LDFLAGS) -o$(PROJECT_NAME) $(OBJECTS)
+
+$(PROJECT_NAME).bin: $(PROJECT_NAME)_BANK_2.bin
 	@echo "Creating $@"
 	@cp ${PROJECT_NAME}_BANK_5.bin ${PROJECT_NAME}.bin
 	@dd if=/dev/null of=${PROJECT_NAME}.bin bs=1 count=1 seek=8K
@@ -19,8 +69,8 @@ ${PROJECT_NAME}.bin: ${PROJECT_NAME}_BANK_2.bin
 	@dd if=/dev/null of=${PROJECT_NAME}.bin bs=1 count=1 seek=24K
 	@cat ${PROJECT_NAME}_BANK_0.bin >> ${PROJECT_NAME}.bin
 
-sprite.tap: ${PROJECT_NAME}.bin
-	./tools/zxstlc_linux -t ${PROJECT_NAME}.bin 24576 33156 -e
+$(PROJECT_NAME).tap: $(PROJECT_NAME).bin
+	@echo "Creating $@"
+	$(ZXSTLC) -t $(PROJECT_NAME).bin 24576 33156 -e
 
-dis: ${PROJECT_NAME}.bin
-	z88dk-dis -mz80n -o 0x6000 -x ${PROJECT_NAME}.map ${PROJECT_NAME}.bin | less
+-include $(ASMSRC:.asm=.d) $(CSRC:.c=.d)
