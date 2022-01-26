@@ -1,7 +1,7 @@
 PROJ=test
 SUFFIX=.exe
 
-.PHONY: all clean run
+.PHONY: all clean run dis
 
 all: $(PROJ).sms
 
@@ -10,6 +10,10 @@ all: $(PROJ).sms
 
 run: all
 	blastem$(SUFFIX) -m sms test.sms
+
+dis: all
+	z88dk-dis -mz80 -x $(PROJ).map $(PROJ).bin | less
+
 
 clean:
 	rm -f *.map *.bin *.sms
