@@ -5,7 +5,7 @@ SUFFIX=.exe
 
 all: $(PROJ).sms
 
-%.sms: %.c tiles.inc tilemap.inc title_pal.inc
+%.sms: %.c tiles.inc tilemap.inc title_pal.inc tilesheet.nxp tilesheet.nxt
 	zcc +sms -m -o $(PROJ).bin $< -create-app
 
 run: all

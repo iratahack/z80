@@ -1,10 +1,17 @@
 #include <sms.h>
 #include <stdio.h>
 
+#define TILEMAP_BASE    0x3800
+
 static unsigned char textPal[] = {0x00, 0x3f};
 
 #asm
 section rodata_user
+_tilesheetPal:
+    binary  "tilesheet.nxp"
+_tilesheet:
+    binary  "tilesheet.nxt"
+_tilesheetEnd:
 _titlePal:
     include "title_pal.inc"
 _titlePalEnd:
@@ -17,11 +24,27 @@ _tileMapEnd:
 section code_compiler
 #endasm
 
+extern unsigned char tilesheetPal;
+extern unsigned char tilesheetPalEnd;
+extern unsigned char tilesheet;
+extern unsigned char tilesheetEnd;
 extern unsigned char titlePal;
 extern unsigned char titlePalEnd;
 extern unsigned char tiles;
 extern unsigned char tilesEnd;
 extern unsigned int tileMap;
+
+void __FASTCALL__ putTile(unsigned char tile)
+{
+#asm
+    push    af
+    ld      a, l            ; Tile ID
+    out     ($be), a
+    ld      a, h            ; Attribute
+    out     ($be), a
+    pop     af
+#endasm
+}
 
 void __FASTCALL__ setVRAMAddr(unsigned int addr)
 {
@@ -36,27 +59,25 @@ void __FASTCALL__ setVRAMAddr(unsigned int addr)
 #endasm
 }
 
-void __FASTCALL__ clearScreen(void)
+void __FASTCALL__ fillScreen(unsigned int tile)
 {
 #asm
     push    af
     push    bc
     push    hl
 
-    ld      hl, 0x3800
-    ld      a,l
+    xor     a
     out     ($bf),a
-    ld      a,h
+    ld      a,TILEMAP_BASE>>8
     or      $40
     out     ($bf),a
 
     ld      bc, 0x0003
 l1:
-    ld      a, ' '          ; SPACE
-    out     ($be), a        ; Character number
-    xor     a
-    out     ($be), a        ; Attribute number
-
+    ld      a, l            ; Tile ID
+    out     ($be), a
+    ld      a, h            ; Attribute
+    out     ($be), a
     djnz    l1
 
     dec     c
@@ -91,8 +112,34 @@ void main()
     set_vdp_reg(VDP_REG_FLAGS1, 0);
     load_palette(textPal, 0, 2);
     load_tiles(standard_font, 0, 256, 1);
-    clearScreen();
+    fillScreen(' ');
+    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
+
     gotoxy(13, 11);
     printf("Done!\n");
+
+    // Wait for 5 seconds
+    for (n=0; n<60*5; n++)
+    {
+        __asm__("halt");
+    }
+
+    set_vdp_reg(VDP_REG_FLAGS1, 0);
+    load_palette(&tilesheetPal, 0, 16);
+    load_tiles(&tilesheet, 0, 256, 4);
+    fillScreen(0x0b);
     set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
+
+    for(int y=0; y<16; y++)
+    {
+        setVRAMAddr(TILEMAP_BASE + (y<<6));
+        for(int x=0; x<16; x++)
+        {
+            putTile((y*16)+x);
+        }
+    }
+
+    while(1)
+        __asm__("halt");
+
 }
