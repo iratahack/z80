@@ -6,7 +6,7 @@ SUFFIX=.exe
 all: $(PROJ).sms
 
 %.sms: %.c vdp.asm tilesheet.nxp tilesheet.nxt title2.nxp title2.nxt title2.nxm
-	zcc +sms -m -o $(PROJ).bin $< vdp.asm -create-app
+	zcc +sms -O2 -m -o $(PROJ).bin $< vdp.asm -create-app
 
 run: all
 	blastem$(SUFFIX) -m sms test.sms

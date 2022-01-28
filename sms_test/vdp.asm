@@ -12,6 +12,7 @@
 
         public  _setVRAMAddr
         public  _writeVRAM
+        public  _font
         public  _tiles
         public  _tileMap
         public  _tilesEnd
@@ -255,3 +256,5 @@ _tiles:
 _tilesEnd:
 _tileMap:
         binary  "title2.nxm"
+_font:
+        binary  "Torment.ch8"

@@ -22,6 +22,7 @@ __z88dk_fastcall;
 
 #define TILEMAP_BASE 0x3800
 #define SPRITE_INFO_TABLE 0x3f00
+#define FONT_TILE_OFFSET 0x100
 
 #define UP  0x01
 #define DOWN  0x02
@@ -38,11 +39,26 @@ extern unsigned char titlePal;
 extern unsigned char tiles;
 extern unsigned char tilesEnd;
 extern unsigned int tileMap;
+extern unsigned char font[];
+
+void print(uint8_t *string, uint8_t y, uint8_t x)
+{
+    uint16_t tile;
+
+    setVRAMAddr(TILEMAP_BASE + (y << 6) + (x << 1));
+
+    while ((tile = *string++))
+    {
+        putTile((tile - 32) + FONT_TILE_OFFSET);
+    }
+}
 
 void main()
 {
-    uint8_t x = 0x7c;
-    uint8_t y = 0x5c;
+    uint8_t x = (256 / 2) - 4;
+    uint8_t y = (192 / 2) - 4;
+    uint8_t str[16];
+
     // Clear 16KB of VRAM
     clear_vram();
     // Disable all sprites by writing 0xd0
@@ -65,7 +81,7 @@ void main()
 
     set_vdp_reg(VDP_REG_FLAGS1, 0);
     load_palette(textPal, 0, 16);
-    load_tiles(standard_font, 0, 256, 1);
+    load_tiles(&font[0], 32, 96, 1);
     fillScreen(' ');
     // Enable screen and frame interrupts
     set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
@@ -83,6 +99,7 @@ void main()
     load_palette(&tilesheetPal, 0, 16);
     load_palette(&tilesheetPal, 16, 16);
     load_tiles(&tilesheet, 0, 256, 4);
+    load_tiles(&font[0], FONT_TILE_OFFSET, 96, 1);
     fillScreen(0x0b);
     // Enable screen and frame interrupts
     set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
@@ -96,7 +113,11 @@ void main()
         }
     }
 
-    setSpritePattern(0, (5 * 16) + 4);
+    for (int p = 0; p < 9; p++)
+    {
+        setSpritePattern(p, (5 * 16) + 4);
+        setSpriteXY(p, y, x + (p * 8));
+    }
 
     while (1)
     {
@@ -109,7 +130,7 @@ void main()
             if (y > 0)
                 y--;
         }
-        else if (!(dir & DOWN))
+        if (!(dir & DOWN))
         {
             if (y < (192 - 8))
                 y++;
@@ -119,11 +140,14 @@ void main()
             if (x > 0)
                 x--;
         }
-        else if (!(dir & RIGHT))
+        if (!(dir & RIGHT))
         {
             if (x < (256 - 8))
                 x++;
         }
+
+        sprintf(str, "X=%3d, Y=%3d", x, y);
+        print(str, 23, 0);
 
         setSpriteXY(0, y, x);
     }
