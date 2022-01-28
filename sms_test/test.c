@@ -1,15 +1,32 @@
 #include <sms.h>
 #include <stdio.h>
 
-extern void setVRAMAddr(uint16_t addr) __z88dk_fastcall;
-extern void writeVRAM(uint8_t) __z88dk_fastcall;
-extern void fillScreen(uint16_t tile) __z88dk_fastcall;
-extern void putTile(uint16_t tile) __z88dk_fastcall;
-extern void loadFullMap(uint16_t *addr) __z88dk_fastcall;
-extern void loadTileset(uint8_t *addr, uint16_t count) __z88dk_fastcall;
+extern void setVRAMAddr(uint16_t addr)
+__z88dk_fastcall;
+extern void writeVRAM( uint8_t)
+__z88dk_fastcall;
+extern void fillScreen(uint16_t tile)
+__z88dk_fastcall;
+extern void putTile(uint16_t tile)
+__z88dk_fastcall;
+extern void loadFullMap(uint16_t *addr)
+__z88dk_fastcall;
+extern void loadTileset(uint8_t *addr, uint16_t count)
+__z88dk_fastcall;
+extern void setSpriteXY(uint8_t spriteID, uint8_t xPos, uint8_t yPos)
+__z88dk_fastcall;
+extern void setSpritePattern(uint8_t spriteID, uint8_t patternID)
+__z88dk_fastcall;
+extern uint16_t readJoypad(void)
+__z88dk_fastcall;
 
 #define TILEMAP_BASE 0x3800
 #define SPRITE_INFO_TABLE 0x3f00
+
+#define UP  0x01
+#define DOWN  0x02
+#define LEFT  0x04
+#define RIGHT  0x08
 
 static const unsigned char textPal[] =
 { 0x00, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,
@@ -24,12 +41,15 @@ extern unsigned int tileMap;
 
 void main()
 {
+    uint8_t x = 0x7c;
+    uint8_t y = 0x5c;
     // Clear 16KB of VRAM
     clear_vram();
     // Disable all sprites by writing 0xd0
     // to the Y location of the first sprite
     setVRAMAddr(SPRITE_INFO_TABLE);
-    writeVRAM(0xd0);
+    for (int n = 0; n < 64; n++)
+        writeVRAM(0xd0);
 
     loadTileset(&tiles, (&tilesEnd - &tiles));
     load_palette(&titlePal, 0, 16);
@@ -61,6 +81,7 @@ void main()
 
     set_vdp_reg(VDP_REG_FLAGS1, 0);
     load_palette(&tilesheetPal, 0, 16);
+    load_palette(&tilesheetPal, 16, 16);
     load_tiles(&tilesheet, 0, 256, 4);
     fillScreen(0x0b);
     // Enable screen and frame interrupts
@@ -75,6 +96,35 @@ void main()
         }
     }
 
+    setSpritePattern(0, (5 * 16) + 4);
+
     while (1)
+    {
+        uint16_t dir;
         __asm__("halt");
+
+        dir = readJoypad();
+        if (!(dir & UP))
+        {
+            if (y > 0)
+                y--;
+        }
+        else if (!(dir & DOWN))
+        {
+            if (y < (192 - 8))
+                y++;
+        }
+        if (!(dir & LEFT))
+        {
+            if (x > 0)
+                x--;
+        }
+        else if (!(dir & RIGHT))
+        {
+            if (x < (256 - 8))
+                x++;
+        }
+
+        setSpriteXY(0, y, x);
+    }
 }

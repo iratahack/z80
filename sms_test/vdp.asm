@@ -1,5 +1,14 @@
         defc    TILEMAP_BASE=0x3800
         defc    PATTERN_BASE=0x0000
+        defc    SPRITE_INFO_TABLE=0x3f00
+
+        defc    UP=0x01
+        defc    DOWN=0x02
+        defc    LEFT=0x04
+        defc    RIGHT=0x08
+
+        defc    IO_JOYPAD1=0xdc
+        defc    IO_JOYPAD2=0xdd
 
         public  _setVRAMAddr
         public  _writeVRAM
@@ -14,7 +23,79 @@
         public  _loadFullMap
         public  _loadTileset
 
+        public  _setSpriteXY
+        public  _readJoypad
+        public  _setSpritePattern
+
         section code_user
+
+_setSpritePattern:
+        ld      ix, 2
+        add     ix, sp
+
+        ld      h, l                    ; Pattern ID
+        ld      l, (ix+0)               ; Sprite ID
+
+        ;
+        ; Input:
+        ;   h - Sprite pattern ID
+        ;   l - Sprite ID
+        ;
+setSpritePattern:
+        push    af
+
+        ; Set VRAM address for sprite pattern
+        ld      a, l
+        add     a
+        add     0x81
+        out     ($bf), a
+        ld      a, SPRITE_INFO_TABLE>>8
+        or      $40
+        out     ($bf), a
+
+        ld      a, h                    ; Pattern ID
+        out     (0xbe), a
+
+        pop     af
+        ret
+
+_setSpriteXY:
+        ld      ix, 2                   ; Return address
+        add     ix, sp
+
+        ld      a, (ix+2)               ; Sprite ID
+        ld      b, (ix+0)               ; Sprite Y pos
+        ld      c, l                    ; Sprite X pos
+
+setSpriteXY:
+
+        push    af
+        ; Set VRAM address for Y location
+        out     ($bf), a
+        ld      a, SPRITE_INFO_TABLE>>8
+        or      $40
+        out     ($bf), a
+
+        ; Set the Y location
+        ld      a, b
+        dec     a
+        out     (0xbe), a
+
+        ; Set VRAM address for X location
+        pop     af
+        add     a
+        or      0x80
+        out     ($bf), a
+        ld      a, SPRITE_INFO_TABLE>>8
+        or      $40
+        out     ($bf), a
+
+        ; Set the X location
+        ld      a, c
+        out     (0xbe), a
+
+        ret
+
 
 _loadTileset:
         ld      ix, 2                   ; Return address & pushed regs
@@ -153,6 +234,13 @@ l1:
 
         pop     bc
         pop     af
+        ret
+
+_readJoypad:
+        in      a, (IO_JOYPAD1)
+        ld      l, a
+        in      a, (IO_JOYPAD2)
+        ld      h, a
         ret
 
         section rodata_user
