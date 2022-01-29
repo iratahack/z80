@@ -3,7 +3,7 @@ SUFFIX=.exe
 
 .PHONY: all clean run dis
 
-all: $(PROJ).sms
+all: Gfx2Next $(PROJ).sms
 
 %.sms: %.c vdp.asm Makefile tilesheet.nxt title2.nxt SMS_Sprites.nxt
 	zcc +sms -O2 -m -o $(PROJ).bin $< vdp.asm -create-app
@@ -14,7 +14,7 @@ run: all
 dis: all
 	z88dk-dis -mz80 -x $(PROJ).map $(PROJ).bin | less
 
-SMS_Sprites.nxt: SMS_Sprites.png
+SMS_Sprites.nxt: SMS_Sprites.png Gfx2Next/bin/gfx2next
 	gfx2next -map-none -tile-y -pal-bgr222 -tile-planar4 $<
 
 tilesheet.nxt: tilesheet.png
@@ -22,6 +22,10 @@ tilesheet.nxt: tilesheet.png
 
 title2.nxt: title2.png
 	gfx2next -map-sms -pal-bgr222 -tile-nomirror -tile-planar4 $<
+
+Gfx2Next:
+	git clone --depth=1 https://github.com/headkaze/Gfx2Next.git
+	make -C Gfx2Next
 
 clean:
 	rm -f *.map *.bin *.sms *.nxp *.nxt *.nxm
