@@ -23,6 +23,8 @@
         public  _putTile
         public  _loadFullMap
         public  _loadTileset
+        public  _knightTiles
+        public  _knightPalette
 
         public  _setSpriteXY
         public  _readJoypad
@@ -258,3 +260,7 @@ _tileMap:
         binary  "title2.nxm"
 _font:
         binary  "Torment.ch8"
+_knightTiles:
+        binary  "SMS_Sprites.nxt"
+_knightPalette:
+        binary  "SMS_Sprites.nxp"

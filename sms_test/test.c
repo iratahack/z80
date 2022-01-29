@@ -33,13 +33,15 @@ static const unsigned char textPal[] =
 { 0x00, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,
         0x3f, 0x3f, 0x3f };
 
-extern unsigned char tilesheetPal;
-extern unsigned char tilesheet;
-extern unsigned char titlePal;
-extern unsigned char tiles;
-extern unsigned char tilesEnd;
-extern unsigned int tileMap;
+extern unsigned char tilesheetPal[];
+extern unsigned char tilesheet[];
+extern unsigned char titlePal[];
+extern unsigned char tiles[];
+extern unsigned char tilesEnd[];
+extern unsigned int tileMap[];
 extern unsigned char font[];
+extern unsigned char knightTiles[];
+extern unsigned char knightPalette[];
 
 void print(uint8_t *string, uint8_t y, uint8_t x)
 {
@@ -67,9 +69,9 @@ void main()
     for (int n = 0; n < 64; n++)
         writeVRAM(0xd0);
 
-    loadTileset(&tiles, (&tilesEnd - &tiles));
-    load_palette(&titlePal, 0, 16);
-    loadFullMap(&tileMap);
+    loadTileset(tiles, (&tilesEnd - &tiles));
+    load_palette(titlePal, 0, 16);
+    loadFullMap(tileMap);
     // Enable screen and frame interrupts
     set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
 
@@ -81,7 +83,7 @@ void main()
 
     set_vdp_reg(VDP_REG_FLAGS1, 0);
     load_palette(textPal, 0, 16);
-    load_tiles(&font[0], 32, 96, 1);
+    load_tiles(font, 32, 96, 1);
     fillScreen(' ');
     // Enable screen and frame interrupts
     set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
@@ -96,13 +98,16 @@ void main()
     }
 
     set_vdp_reg(VDP_REG_FLAGS1, 0);
-    load_palette(&tilesheetPal, 0, 16);
-    load_palette(&tilesheetPal, 16, 16);
-    load_tiles(&tilesheet, 0, 256, 4);
-    load_tiles(&font[0], FONT_TILE_OFFSET, 96, 1);
+    load_palette(tilesheetPal, 0, 16);
+    load_palette(knightPalette, 16, 16);
+    load_tiles(tilesheet, 0, 256, 4);
+    load_tiles(font, FONT_TILE_OFFSET, 96, 1);
+    load_tiles(knightTiles, FONT_TILE_OFFSET + 96, 20, 4);
     fillScreen(0x0b);
     // Enable screen and frame interrupts
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
+    set_vdp_reg(VDP_REG_FLAGS1,
+            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    set_vdp_reg(0x86, 0x04);
 
     for (int y = 0; y < 16; y++)
     {
@@ -113,15 +118,14 @@ void main()
         }
     }
 
-    for (int p = 0; p < 9; p++)
-    {
-        setSpritePattern(p, (5 * 16) + 4);
-        setSpriteXY(p, y, x + (p * 8));
-    }
+    setSpritePattern(0, 96);
+    setSpritePattern(1, 98);
 
     while (1)
     {
         uint16_t dir;
+        __asm__("halt");
+        __asm__("halt");
         __asm__("halt");
 
         dir = readJoypad();
@@ -132,7 +136,7 @@ void main()
         }
         if (!(dir & DOWN))
         {
-            if (y < (192 - 8))
+            if (y < (192 - 16))
                 y++;
         }
         if (!(dir & LEFT))
@@ -142,13 +146,16 @@ void main()
         }
         if (!(dir & RIGHT))
         {
-            if (x < (256 - 8))
+            if (x < (256 - 16))
                 x++;
         }
 
         sprintf(str, "X=%3d, Y=%3d", x, y);
         print(str, 23, 0);
 
+        setSpritePattern(0, 96 + ((x % 5) * 4));
+        setSpritePattern(1, 98 + ((x % 5) * 4));
         setSpriteXY(0, y, x);
+        setSpriteXY(1, y, x + 8);
     }
 }
