@@ -1,7 +1,6 @@
 AS=z88dk-asmpp
 LD=z88dk-z80asm
 
-TARGET= +zxn
 PROJECT_NAME=sprite
 ASMSRC=sprite.asm tiles.asm levels.asm knight.asm
 ZXSTLC=./tools/zxstlc_linux
