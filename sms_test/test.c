@@ -23,7 +23,7 @@ __z88dk_fastcall;
 #define TILEMAP_BASE 0x3800
 #define SPRITE_INFO_TABLE 0x3f00
 #define FONT_TILE_OFFSET 0x100
-
+#define VDP_REG_SPRITE_PATTERN_BASE 0x86
 #define UP  0x01
 #define DOWN  0x02
 #define LEFT  0x04
@@ -104,11 +104,14 @@ void main()
     load_tiles(font, FONT_TILE_OFFSET, 96, 1);
     load_tiles(knightTiles, FONT_TILE_OFFSET + 96, 20, 4);
     fillScreen(0x0b);
-    // Enable screen and frame interrupts
+    // Enable screen, frame interrupt & 8x16 sprites
     set_vdp_reg(VDP_REG_FLAGS1,
             VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
-    set_vdp_reg(0x86, 0x04);
 
+    // Sprites use tiles >= 256
+    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04);
+
+    // Display the 256 entry tilesheet
     for (int y = 0; y < 16; y++)
     {
         setVRAMAddr(TILEMAP_BASE + (y << 6));
@@ -118,6 +121,7 @@ void main()
         }
     }
 
+    // Set the patterns for sprite 0 & 1
     setSpritePattern(0, 96);
     setSpritePattern(1, 98);
 
@@ -128,7 +132,10 @@ void main()
         __asm__("halt");
         __asm__("halt");
 
+        // Read joypad 1&2 inputs
         dir = readJoypad();
+
+        // Update sprite position
         if (!(dir & UP))
         {
             if (y > 0)
@@ -150,12 +157,15 @@ void main()
                 x++;
         }
 
-        sprintf(str, "X=%3d, Y=%3d", x, y);
-        print(str, 23, 0);
-
+        // Update sprite pattern for animation
         setSpritePattern(0, 96 + ((x % 5) * 4));
         setSpritePattern(1, 98 + ((x % 5) * 4));
+        // Update sprite position
         setSpriteXY(0, y, x);
         setSpriteXY(1, y, x + 8);
+
+        // Display the co-ords for sprite top-left
+        sprintf(str, "X=%3d, Y=%3d", x, y);
+        print(str, 23, 0);
     }
 }
