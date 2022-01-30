@@ -25,12 +25,24 @@
         public  _loadTileset
         public  _knightTiles
         public  _knightPalette
+        public  _readVCount
 
         public  _setSpriteXY
         public  _readJoypad
         public  _setSpritePattern
 
+        public  _PSGInit
+        public  _PSGFrame
+        public  _PSGPlay
+        public  _batman
+
         section code_user
+
+_readVCount:
+        in      a, (0x7e)
+        ld      l, a
+        ld      h, 0
+        ret
 
 _setSpritePattern:
         ld      ix, 2
@@ -72,7 +84,7 @@ _setSpriteXY:
 
 setSpriteXY:
 
-        push    af
+        ld      l, a
         ; Set VRAM address for Y location
         out     ($bf), a
         ld      a, SPRITE_INFO_TABLE>>8
@@ -85,7 +97,7 @@ setSpriteXY:
         out     (0xbe), a
 
         ; Set VRAM address for X location
-        pop     af
+        ld      a, l
         add     a
         or      0x80
         out     ($bf), a
@@ -246,6 +258,8 @@ _readJoypad:
         ld      h, a
         ret
 
+        include "PSGlib.inc"
+
         section rodata_user
 _tilesheetPal:
         binary  "tilesheet.nxp"
@@ -264,3 +278,5 @@ _knightTiles:
         binary  "SMS_Sprites.nxt"
 _knightPalette:
         binary  "SMS_Sprites.nxp"
+_batman:
+        binary  "my_mission.psg"

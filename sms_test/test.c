@@ -19,11 +19,21 @@ extern void setSpritePattern(uint8_t spriteID, uint8_t patternID)
 __z88dk_fastcall;
 extern uint16_t readJoypad(void)
 __z88dk_fastcall;
+extern uint16_t readVCount(void)
+__z88dk_fastcall;
+extern uint16_t PSGInit(void)
+__z88dk_fastcall;
+extern uint16_t PSGFrame(void)
+__z88dk_fastcall;
+extern uint16_t PSGPlay(uint8_t *psg)
+__z88dk_fastcall;
 
 #define TILEMAP_BASE 0x3800
 #define SPRITE_INFO_TABLE 0x3f00
-#define FONT_TILE_OFFSET 0x100
 #define VDP_REG_SPRITE_PATTERN_BASE 0x86
+#define FONT_TILE_OFFSET 0x100
+#define RIGHT_SPRITE    (FONT_TILE_OFFSET + 96)
+#define LEFT_SPRITE     (RIGHT_SPRITE + 20)
 #define UP  0x01
 #define DOWN  0x02
 #define LEFT  0x04
@@ -42,6 +52,7 @@ extern unsigned int tileMap[];
 extern unsigned char font[];
 extern unsigned char knightTiles[];
 extern unsigned char knightPalette[];
+extern uint8_t batman[];
 
 void print(uint8_t *string, uint8_t y, uint8_t x)
 {
@@ -55,11 +66,25 @@ void print(uint8_t *string, uint8_t y, uint8_t x)
     }
 }
 
+void isr(void)
+{
+    PSGFrame();
+}
+
 void main()
 {
     uint8_t x = (256 / 2) - 4;
     uint8_t y = (192 / 2) - 4;
-    uint8_t str[16];
+    uint16_t startCount;
+    uint16_t endCount;
+    uint8_t str[33];
+    uint16_t sprite = RIGHT_SPRITE + ((x % 5) << 2);
+    uint16_t dir;
+
+    add_raster_int(isr);
+
+    PSGInit();
+    PSGPlay(batman);
 
     // Clear 16KB of VRAM
     clear_vram();
@@ -102,7 +127,7 @@ void main()
     load_palette(knightPalette, 16, 16);
     load_tiles(tilesheet, 0, 256, 4);
     load_tiles(font, FONT_TILE_OFFSET, 96, 1);
-    load_tiles(knightTiles, FONT_TILE_OFFSET + 96, 20, 4);
+    load_tiles(knightTiles, RIGHT_SPRITE, 40, 4);
     fillScreen(0x0b);
     // Enable screen, frame interrupt & 8x16 sprites
     set_vdp_reg(VDP_REG_FLAGS1,
@@ -121,16 +146,12 @@ void main()
         }
     }
 
-    // Set the patterns for sprite 0 & 1
-    setSpritePattern(0, 96);
-    setSpritePattern(1, 98);
-
     while (1)
     {
-        uint16_t dir;
         __asm__("halt");
         __asm__("halt");
         __asm__("halt");
+        startCount = readVCount();
 
         // Read joypad 1&2 inputs
         dir = readJoypad();
@@ -150,22 +171,25 @@ void main()
         {
             if (x > 0)
                 x--;
+            sprite = LEFT_SPRITE + ((x % 5) << 2);
         }
         if (!(dir & RIGHT))
         {
             if (x < (256 - 16))
                 x++;
+            sprite = RIGHT_SPRITE + ((x % 5) << 2);
         }
 
         // Update sprite pattern for animation
-        setSpritePattern(0, 96 + ((x % 5) * 4));
-        setSpritePattern(1, 98 + ((x % 5) * 4));
+        setSpritePattern(0, sprite);
+        setSpritePattern(1, sprite + 2);
         // Update sprite position
         setSpriteXY(0, y, x);
         setSpriteXY(1, y, x + 8);
+        endCount = readVCount();
 
         // Display the co-ords for sprite top-left
-        sprintf(str, "X=%3d, Y=%3d", x, y);
+        sprintf(str, "X=%3d, Y=%3d, V-Count=%3d", x, y, endCount - startCount);
         print(str, 23, 0);
     }
 }
