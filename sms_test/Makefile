@@ -1,18 +1,39 @@
-PROJ=test
-SUFFIX=.exe
+PROJ:=test
+SUFFIX:=.exe
+
+CC:=zcc
+AS:=zcc
+LD:=zcc
+
+ASFLAGS:=
+CFLAGS:=-O2
+LDFLAGS:=-m
+TARGET?= +sms
+ASMSRC:=$(wildcard *.asm)
+CSRC:=$(wildcard *.c)
+OBJS:=$(CSRC:.c=.o) $(ASMSRC:.asm=.o)
 
 .PHONY: all clean run dis
 
 all: Gfx2Next $(PROJ).sms
 
-%.sms: %.c vdp.asm Makefile tilesheet.nxt title2.nxt SMS_Sprites.nxt
-	zcc +sms -O2 -m -o $(PROJ).bin $< vdp.asm -create-app
+%.sms: $(OBJS) Makefile tilesheet.nxt title2.nxt SMS_Sprites.nxt
+	@echo "Linking $@"
+	@$(LD) $(TARGET) $(LDFLAGS) -o $(PROJ).bin $(OBJS) -create-app
 
 run: all
 	blastem$(SUFFIX) -m sms test.sms
 
 dis: all
 	z88dk-dis -mz80 -x $(PROJ).map $(PROJ).bin | less
+
+%.o: %.asm
+	@echo "Assembling $<"
+	@$(AS) $(TARGET) $(ASFLAGS) -c $<
+
+%.o: %.c
+	@echo "Compiling $<"
+	@$(AS) $(TARGET) $(CFLAGS) -c $<
 
 SMS_Sprites.nxt: SMS_Sprites.png Gfx2Next/bin/gfx2next
 	./Gfx2Next/bin/gfx2next -map-none -tile-y -pal-bgr222 -tile-planar4 $<

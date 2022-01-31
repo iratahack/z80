@@ -72,8 +72,8 @@ void main()
 {
     uint8_t x = (256 / 2) - 4;
     uint8_t y = (192 / 2) - 4;
-    uint16_t startCount;
-    uint16_t endCount;
+    uint16_t startCount = 0;
+    uint16_t endCount = 0;
     uint8_t str[33];
     uint16_t sprite = RIGHT_SPRITE + ((x % 5) << 2);
     uint16_t dir;
@@ -93,11 +93,12 @@ void main()
         writeVRAM(0xd0);
 
     bank(4);
-    loadTileset(tiles, (&tilesEnd - &tiles));
-    loadFullMap(tileMap);
+    load_tiles(tiles, 0, (&tilesEnd - &tiles) / 32, 4);
+    set_bkg_map(tileMap, 0, 0, 32, 24);
     load_palette(titlePal, 0, 16);
     // Enable screen, frame interrupt & 8x16 sprites
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    set_vdp_reg(VDP_REG_FLAGS1,
+            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
     // Sprites use tiles >= 256
     set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04);
 
@@ -163,11 +164,8 @@ void main()
         }
 
         // Update sprite pattern for animation
-        setSpritePattern(0, sprite);
-        setSpritePattern(1, sprite + 2);
-        // Update sprite position
-        setSpriteXY(0, y, x);
-        setSpriteXY(1, y, x + 8);
+        set_sprite(0, x, y, sprite);
+        set_sprite(1, x + 8, y, sprite + 2);
         endCount = readVCount();
 
         // Display the co-ords for sprite top-left
