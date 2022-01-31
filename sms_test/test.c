@@ -27,6 +27,8 @@ extern uint16_t PSGFrame(void)
 __z88dk_fastcall;
 extern uint16_t PSGPlay(uint8_t *psg)
 __z88dk_fastcall;
+extern void bank(uint8_t bank)
+__z88dk_fastcall;
 
 #define TILEMAP_BASE 0x3800
 #define SPRITE_INFO_TABLE 0x3f00
@@ -39,9 +41,9 @@ __z88dk_fastcall;
 #define LEFT  0x04
 #define RIGHT  0x08
 
-static const unsigned char textPal[] =
-{ 0x00, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,
-        0x3f, 0x3f, 0x3f };
+static const unsigned char blackPal[] =
+{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00 };
 
 extern unsigned char tilesheetPal[];
 extern unsigned char tilesheet[];
@@ -52,7 +54,7 @@ extern unsigned int tileMap[];
 extern unsigned char font[];
 extern unsigned char knightTiles[];
 extern unsigned char knightPalette[];
-extern uint8_t batman[];
+extern uint8_t music[];
 
 void print(uint8_t *string, uint8_t y, uint8_t x)
 {
@@ -66,11 +68,6 @@ void print(uint8_t *string, uint8_t y, uint8_t x)
     }
 }
 
-void isr(void)
-{
-    PSGFrame();
-}
-
 void main()
 {
     uint8_t x = (256 / 2) - 4;
@@ -81,24 +78,28 @@ void main()
     uint16_t sprite = RIGHT_SPRITE + ((x % 5) << 2);
     uint16_t dir;
 
-    add_raster_int(isr);
-
+    add_raster_int(PSGFrame);
     PSGInit();
-    PSGPlay(batman);
+    PSGPlay(music);
 
-    // Clear 16KB of VRAM
+    // Clear VRAM and CRAM
     clear_vram();
+    load_palette(blackPal, 0, 16);
+    load_palette(blackPal, 16, 16);
     // Disable all sprites by writing 0xd0
     // to the Y location of the first sprite
     setVRAMAddr(SPRITE_INFO_TABLE);
     for (int n = 0; n < 64; n++)
         writeVRAM(0xd0);
 
+    bank(4);
     loadTileset(tiles, (&tilesEnd - &tiles));
-    load_palette(titlePal, 0, 16);
     loadFullMap(tileMap);
-    // Enable screen and frame interrupts
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
+    load_palette(titlePal, 0, 16);
+    // Enable screen, frame interrupt & 8x16 sprites
+    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    // Sprites use tiles >= 256
+    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04);
 
     // Wait for 5 seconds
     for (int n = 0; n < 60 * 5; n++)
@@ -106,35 +107,17 @@ void main()
         __asm__("halt");
     }
 
-    set_vdp_reg(VDP_REG_FLAGS1, 0);
-    load_palette(textPal, 0, 16);
-    load_tiles(font, 32, 96, 1);
-    fillScreen(' ');
-    // Enable screen and frame interrupts
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT);
+    load_palette(blackPal, 0, 16);
+    load_palette(blackPal, 16, 16);
 
-    gotoxy(13, 11);
-    printf("Done!\n");
-
-    // Wait for 5 seconds
-    for (int n = 0; n < 60 * 5; n++)
-    {
-        __asm__("halt");
-    }
-
-    set_vdp_reg(VDP_REG_FLAGS1, 0);
-    load_palette(tilesheetPal, 0, 16);
-    load_palette(knightPalette, 16, 16);
+    bank(3);
+    fillScreen(0x0b);
     load_tiles(tilesheet, 0, 256, 4);
     load_tiles(font, FONT_TILE_OFFSET, 96, 1);
     load_tiles(knightTiles, RIGHT_SPRITE, 40, 4);
-    fillScreen(0x0b);
-    // Enable screen, frame interrupt & 8x16 sprites
-    set_vdp_reg(VDP_REG_FLAGS1,
-            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
-
-    // Sprites use tiles >= 256
-    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04);
+    load_palette(tilesheetPal, 0, 16);
+    load_palette(knightPalette, 16, 16);
+    bank(2);
 
     // Display the 256 entry tilesheet
     for (int y = 0; y < 16; y++)
@@ -148,7 +131,6 @@ void main()
 
     while (1)
     {
-        __asm__("halt");
         __asm__("halt");
         __asm__("halt");
         startCount = readVCount();

@@ -3,10 +3,6 @@
 ;          https://github.com/sverx/PSGlib
 ;================================================================
 
-; NOTE: this uses a WLA-DX 'ramsection' at slot 3
-;       If you want to change or remove that,
-;       see the note at the end of this file
-
         defc    PSG_STOPPED=0
         defc    PSG_PLAYING=1
 
@@ -44,7 +40,6 @@ _PSGInit:
                                         ; volume attenuation = none
         ret
 
-        section code_user
 ; ************************************************************************************
 ; all receive in HL the address of the PSG to start playing
 ; PSGPlayLoops also receives in A the number of times to loop the PSG
@@ -73,7 +68,6 @@ _1l:    ld      (PSGLoopFlag), a
         ld      (PSGMusicStatus), a     ; set status to PSG_PLAYING
         ret
 
-        section code_user
 ; ************************************************************************************
 ; stops the music (leaving the SFX on, if it's playing)
 ; destroys AF
@@ -103,7 +97,6 @@ _3l:    xor     a                       ; ld a,PSG_STOPPED
         ld      (PSGMusicStatus), a     ; set status to PSG_STOPPED
         ret
 
-        section code_user
 ; ************************************************************************************
 ; resume a previously stopped music
 ; destroys AF
@@ -141,7 +134,6 @@ _5l:    ld      a, PSG_PLAYING
         ld      (PSGMusicStatus), a     ; set status to PSG_PLAYING
         ret
 
-        section code_user
 ; ************************************************************************************
 ; sets the currently looping music to no more loops after the current
 ; destroys AF
@@ -151,14 +143,12 @@ PSGCancelLoop:
         ld      (PSGLoopCounter), a
         ret
 
-        section code_user
 ; ************************************************************************************
 ; gets the current status of music into register A
 PSGGetStatus:
         ld      a, (PSGMusicStatus)
         ret
 
-        section code_user
 ; ************************************************************************************
 ; receives in L the volume attenuation for the music (0-15)
 ; destroys AF
@@ -216,7 +206,6 @@ _9l:    or      PSGLatch|PSGChannel3|PSGVolumeData
 
         ret
 
-        section code_user
 ; ************************************************************************************
 ; sets all PSG channels to volume ZERO (useful if you need to pause music)
 ; destroys AF
@@ -235,7 +224,6 @@ PSGSilenceChannels:
         out     (PSGDataPort), a
         ret
 
-        section code_user
 ; ************************************************************************************
 ; resets all PSG channels to previous volume
 ; destroys AF,HL
@@ -309,7 +297,6 @@ _dl:    or      PSGLatch|PSGChannel3|PSGVolumeData
 
         ret
 
-        section code_user
 ; ************************************************************************************
 ; receives in HL the address of the SFX PSG to start
 ; receives in C the mask that indicates which channel(s) the SFX will use
@@ -347,7 +334,6 @@ _10l:   ld      (PSGSFXStatus), a       ; set status to PSG_PLAYING
         out     (PSGDataPort), a
         ret
 
-        section code_user
 ; ************************************************************************************
 ; stops the SFX (leaving the music on, if it's playing)
 ; destroys AF
@@ -422,7 +408,6 @@ _skipRestore:
         ld      (PSGSFXStatus), a       ; set status to PSG_STOPPED
         ret
 
-        section code_user
 ; ************************************************************************************
 ; sets the currently looping SFX to no more loops after the current
 ; destroys AF
@@ -431,14 +416,12 @@ PSGSFXCancelLoop:
         ld      (PSGSFXLoopFlag), a
         ret
 
-        section code_user
 ; ************************************************************************************
 ; gets the current SFX status into register A
 PSGSFXGetStatus:
         ld      a, (PSGSFXStatus)
         ret
 
-        section code_user
 ; ************************************************************************************
 ; processes a music frame
 ; destroys AF,HL,BC
@@ -646,7 +629,6 @@ _high_part_Tone:
         jr      z, _send2PSG_B
         jp      _intLoop
 
-        section code_user
 ; ************************************************************************************
 ; processes a SFX frame
 ; destroys AF,HL,BC
@@ -746,15 +728,7 @@ _SFXsubstring:
         add     hl, bc                  ; make substring current
         jp      _intSFXLoop
 
-; NOTE: if you don't want to use a ramsection,
-;       comment the ".ramsection" line and
-;       uncomment the next ".enum" one,
-;       setting .enum start RAM address
-;       according to your needs.
-;       Also change ".ends" into ".ende" at end of this file
-
         section bss_user
-;.enum $c000 export                ; PSGlib variables location in RAM
   ; fundamental vars
 PSGMusicStatus:
         ds      1                       ; are we playing a background music?

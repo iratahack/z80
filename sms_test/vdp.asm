@@ -34,9 +34,16 @@
         public  _PSGInit
         public  _PSGFrame
         public  _PSGPlay
-        public  _batman
+        public  _music
+
+        public  _bank
 
         section code_user
+
+_bank:
+        ld      a, l
+        ld      (0xffff), a
+        ret
 
 _readVCount:
         in      a, (0x7e)
@@ -261,10 +268,22 @@ _readJoypad:
         include "PSGlib.inc"
 
         section rodata_user
+_music:
+        binary  "my_mission.psg"
+
+        section RODATA_3
 _tilesheetPal:
         binary  "tilesheet.nxp"
 _tilesheet:
         binary  "tilesheet.nxt"
+_font:
+        binary  "Torment.ch8"
+_knightTiles:
+        binary  "SMS_Sprites.nxt"
+_knightPalette:
+        binary  "SMS_Sprites.nxp"
+
+        section RODATA_4
 _titlePal:
         binary  "title2.nxp"
 _tiles:
@@ -272,11 +291,3 @@ _tiles:
 _tilesEnd:
 _tileMap:
         binary  "title2.nxm"
-_font:
-        binary  "Torment.ch8"
-_knightTiles:
-        binary  "SMS_Sprites.nxt"
-_knightPalette:
-        binary  "SMS_Sprites.nxp"
-_batman:
-        binary  "my_mission.psg"
