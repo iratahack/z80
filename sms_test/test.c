@@ -56,7 +56,8 @@ extern unsigned char knightTiles[];
 extern unsigned char knightPalette[];
 extern uint8_t music[];
 
-void print(uint8_t *string, uint8_t y, uint8_t x)
+#ifdef DEBUG
+void print(uint8_t *string, uint8_t x, uint8_t y)
 {
     uint16_t tile;
 
@@ -67,6 +68,7 @@ void print(uint8_t *string, uint8_t y, uint8_t x)
         putTile((tile - 32) + FONT_TILE_OFFSET);
     }
 }
+#endif
 
 void main()
 {
@@ -86,11 +88,9 @@ void main()
     clear_vram();
     load_palette(blackPal, 0, 16);
     load_palette(blackPal, 16, 16);
-    // Disable all sprites by writing 0xd0
-    // to the Y location of the first sprite
-    setVRAMAddr(SPRITE_INFO_TABLE);
+    // Disable sprites by writing 0xd0 to their Y location
     for (int n = 0; n < 64; n++)
-        writeVRAM(0xd0);
+        set_sprite(n, 0, 0xd0, 0);
 
     bank(4);
     load_tiles(tiles, 0, (&tilesEnd - &tiles) / 32, 4);
@@ -134,8 +134,9 @@ void main()
     {
         __asm__("halt");
         __asm__("halt");
+#ifdef DEBUG
         startCount = readVCount();
-
+#endif
         // Read joypad 1&2 inputs
         dir = readJoypad();
 
@@ -164,12 +165,14 @@ void main()
         }
 
         // Update sprite pattern for animation
-        set_sprite(0, x, y, sprite);
-        set_sprite(1, x + 8, y, sprite + 2);
+        set_sprite(0, x, y - 1, sprite);
+        set_sprite(1, x + 8, y - 1, sprite + 2);
+#ifdef DEBUG
         endCount = readVCount();
 
         // Display the co-ords for sprite top-left
         sprintf(str, "X=%3d, Y=%3d, V-Count=%3d", x, y, endCount - startCount);
-        print(str, 23, 0);
+        print(str, 0, 23);
+#endif
     }
 }
