@@ -1,5 +1,6 @@
 #include <sms.h>
 #include <stdio.h>
+#include <psg.h>
 
 extern void setVRAMAddr(uint16_t addr)
 __z88dk_fastcall;
@@ -81,7 +82,7 @@ void main()
     uint16_t dir;
 
     add_raster_int(PSGFrame);
-    PSGInit();
+    psg_init();
     PSGPlay(music);
 
     // Clear VRAM and CRAM
