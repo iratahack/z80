@@ -1,50 +1,15 @@
 #include <sms.h>
 #include <stdio.h>
 #include <psg.h>
+#include <psg/PSGlib.h>
+#include "vdp.h"
 
-extern void setVRAMAddr(uint16_t addr)
-__z88dk_fastcall;
-extern void writeVRAM( uint8_t)
-__z88dk_fastcall;
-extern void fillScreen(uint16_t tile)
-__z88dk_fastcall;
-extern void putTile(uint16_t tile)
-__z88dk_fastcall;
-extern void loadFullMap(uint16_t *addr)
-__z88dk_fastcall;
-extern void loadTileset(uint8_t *addr, uint16_t count)
-__z88dk_fastcall;
-extern void setSpriteXY(uint8_t spriteID, uint8_t xPos, uint8_t yPos)
-__z88dk_fastcall;
-extern void setSpritePattern(uint8_t spriteID, uint8_t patternID)
-__z88dk_fastcall;
-extern uint16_t readJoypad(void)
-__z88dk_fastcall;
-extern uint16_t readVCount(void)
-__z88dk_fastcall;
-extern uint16_t PSGInit(void)
-__z88dk_fastcall;
-extern uint16_t PSGFrame(void)
-__z88dk_fastcall;
-extern uint16_t PSGPlay(uint8_t *psg)
-__z88dk_fastcall;
-extern void bank(uint8_t bank)
-__z88dk_fastcall;
-
-#define TILEMAP_BASE 0x3800
-#define SPRITE_INFO_TABLE 0x3f00
 #define VDP_REG_SPRITE_PATTERN_BASE 0x86
+
 #define FONT_TILE_OFFSET 0x100
+
 #define RIGHT_SPRITE    (FONT_TILE_OFFSET + 96)
 #define LEFT_SPRITE     (RIGHT_SPRITE + 20)
-#define UP  0x01
-#define DOWN  0x02
-#define LEFT  0x04
-#define RIGHT  0x08
-
-static const unsigned char blackPal[] =
-{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00 };
 
 extern unsigned char tilesheetPal[];
 extern unsigned char tilesheet[];
@@ -73,25 +38,24 @@ void print(uint8_t *string, uint8_t x, uint8_t y)
 
 void main()
 {
-    uint8_t x = (256 / 2) - 4;
-    uint8_t y = (192 / 2) - 4;
+    uint8_t x = (256 / 2) - 8;
+    uint8_t y = (192 / 2) - 8;
     uint16_t startCount = 0;
     uint16_t endCount = 0;
     uint8_t str[33];
     uint16_t sprite = RIGHT_SPRITE + ((x % 5) << 2);
     uint16_t dir;
 
-    add_raster_int(PSGFrame);
-    psg_init();
-    PSGPlay(music);
-
     // Clear VRAM and CRAM
     clear_vram();
-    load_palette(blackPal, 0, 16);
-    load_palette(blackPal, 16, 16);
     // Disable sprites by writing 0xd0 to their Y location
     for (int n = 0; n < 64; n++)
         set_sprite(n, 0, 0xd0, 0);
+
+    // Setup the PSG
+    psg_init();
+    add_raster_int(PSGFrame);
+    PSGPlay(music);
 
     bank(4);
     load_tiles(tiles, 0, (&tilesEnd - &tiles) / 32, 4);
@@ -100,8 +64,8 @@ void main()
     // Enable screen, frame interrupt & 8x16 sprites
     set_vdp_reg(VDP_REG_FLAGS1,
             VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
-    // Sprites use tiles >= 256
-    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04);
+    // Sprites use tiles >= 256, bits 1-0 need to be set for correct operation.
+    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04 | 0x03);
 
     // Wait for 5 seconds
     for (int n = 0; n < 60 * 5; n++)
@@ -109,8 +73,8 @@ void main()
         __asm__("halt");
     }
 
-    load_palette(blackPal, 0, 16);
-    load_palette(blackPal, 16, 16);
+    // Screen off
+    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
 
     bank(3);
     fillScreen(0x0b);
@@ -120,6 +84,8 @@ void main()
     load_palette(tilesheetPal, 0, 16);
     load_palette(knightPalette, 16, 16);
     bank(2);
+    set_vdp_reg(VDP_REG_FLAGS1,
+            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
 
     // Display the 256 entry tilesheet
     for (int y = 0; y < 16; y++)
@@ -139,26 +105,26 @@ void main()
         startCount = readVCount();
 #endif
         // Read joypad 1&2 inputs
-        dir = readJoypad();
+        dir = read_joypad1();
 
         // Update sprite position
-        if (!(dir & UP))
+        if (dir & JOY_UP)
         {
             if (y > 0)
                 y--;
         }
-        if (!(dir & DOWN))
+        if (dir & JOY_DOWN)
         {
             if (y < (192 - 16))
                 y++;
         }
-        if (!(dir & LEFT))
+        if (dir & JOY_LEFT)
         {
             if (x > 0)
                 x--;
             sprite = LEFT_SPRITE + ((x % 5) << 2);
         }
-        if (!(dir & RIGHT))
+        if (dir & JOY_RIGHT)
         {
             if (x < (256 - 16))
                 x++;

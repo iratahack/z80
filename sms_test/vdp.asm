@@ -1,6 +1,11 @@
         defc    TILEMAP_BASE=0x3800
         defc    PATTERN_BASE=0x0000
         defc    SPRITE_INFO_TABLE=0x3f00
+        defc    VDP_Data=0xbe
+        defc    VDP_Command=0xbf
+        defc    VDP_VCount=0x7e
+        defc    VDP_VRAM_Access=0x40
+        defc    VDP_CRAM_Access=0xc0
 
         defc    UP=0x01
         defc    DOWN=0x02
@@ -66,7 +71,7 @@ _bank:
         ;   A
         ;
 _readVCount:
-        in      a, (0x7e)
+        in      a, (VDP_VCount)
         ld      l, a
         ld      h, 0
         ret
@@ -110,12 +115,12 @@ setSpritePattern:
         add     a
         add     0x81
         di
-        out     ($bf), a
-        ld      a, +(SPRITE_INFO_TABLE>>8)|0x40
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, +(SPRITE_INFO_TABLE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
         ld      a, l                    ; Pattern ID
-        out     (0xbe), a
+        out     (VDP_Data), a
 
         pop     af
         ret
@@ -162,29 +167,29 @@ setSpriteXY:
         ld      l, a
         ; Set VRAM address for Y location
         di
-        out     ($bf), a
-        ld      a, +(SPRITE_INFO_TABLE>>8)|0x40
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, +(SPRITE_INFO_TABLE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         ; Set the Y location
         ld      a, b
         dec     a
-        out     (0xbe), a
+        out     (VDP_Data), a
 
         ; Set VRAM address for X location
         ld      a, l
         add     a
         or      0x80
         di
-        out     ($bf), a
-        ld      a, +(SPRITE_INFO_TABLE>>8)|0x40
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, +(SPRITE_INFO_TABLE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         ; Set the X location
         ld      a, c
-        out     (0xbe), a
+        out     (VDP_Data), a
 
         pop     af
         ret
@@ -209,9 +214,9 @@ _loadTileset:
         ; Set VRAM address to start of pattern memory
         xor     a
         di
-        out     ($bf), a
-        or      $40
-        out     ($bf), a
+        out     (VDP_Command), a
+        or      VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         ld      bc, hl                  ; Length in bytes
@@ -229,7 +234,7 @@ writeTileData:
         push    bc
 
         ; Send 256 bytes to port 0xbe
-        ld      bc, 0x00be
+        ld      bc, VDP_Data
         otir
 
         pop     bc
@@ -242,7 +247,7 @@ noBlock:
 
         ; Send remaining bytes to port 0xbe
         ld      b, a
-        ld      c, 0xbe
+        ld      c, VDP_Data
         otir
 
         ret
@@ -265,9 +270,9 @@ _loadFullMap:
 
         xor     a
         di
-        out     ($bf), a
-        ld      a, +(TILEMAP_BASE>>8)|0x40
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         ; Send 6 blocks of 256 bytes to VRAM
@@ -277,7 +282,7 @@ writeBlock:
         push    bc
 
         ; Send 256 bytes to port 0xbe
-        ld      bc, 0x00be
+        ld      bc, VDP_Data
         otir
 
         pop     bc
@@ -302,7 +307,7 @@ writeBlock:
         ;
 _readVRAM:
         push    af
-        in      a, ($be)
+        in      a, (VDP_Data)
         ld      l, a
         ld      h, 0
         pop     af
@@ -323,7 +328,7 @@ _readVRAM:
 _writeVRAM:
         push    af
         ld      a, l                    ; Data
-        out     ($be), a
+        out     (VDP_Data), a
         pop     af
         ret
 
@@ -343,9 +348,15 @@ _writeVRAM:
 _putTile:
         push    af
         ld      a, l                    ; Tile ID
-        out     ($be), a
-        ld      a, h                    ; Attribute
-        out     ($be), a
+        out     (VDP_Data), a
+
+        ; 12
+        REPT    3
+        nop
+        ENDR
+
+        ld      a, h                    ; 4 Attribute
+        out     (VDP_Data), a
         pop     af
         ret
 
@@ -366,10 +377,10 @@ _setVRAMAddr:
 
         ld      a, l
         di
-        out     ($bf), a
+        out     (VDP_Command), a
         ld      a, h
-        or      $40
-        out     ($bf), a
+        or      VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         pop     af
@@ -392,9 +403,9 @@ _setCRAMAddr:
 
         ld      a, l
         di
-        out     ($bf), a
-        ld      a, 0xc0
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, VDP_CRAM_Access
+        out     (VDP_Command), a
         ei
 
         pop     af
@@ -422,19 +433,25 @@ _fillScreen:
         xor     a
         ld      b, a
         di
-        out     ($bf), a
-        ld      a, +(TILEMAP_BASE>>8)|0x40
-        out     ($bf), a
+        out     (VDP_Command), a
+        ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
         ei
 
         ; C - block count, where each block is 256 bytes
         ; B - Byte count for each block 0 = 256 bytes
         ld      c, 0x03
 fsLoop:
-        ld      a, l                    ; Tile ID
-        out     ($be), a
-        ld      a, h                    ; Attribute
-        out     ($be), a
+        ld      a, l                    ; 4 Tile ID
+        out     (VDP_Data), a
+
+		; 12
+        REPT    3
+        nop
+        ENDR
+
+        ld      a, h                    ; 4 Attribute
+        out     (VDP_Data), a
         djnz    fsLoop
 
         dec     c
