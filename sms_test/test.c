@@ -21,6 +21,26 @@ extern unsigned char font[];
 extern unsigned char knightTiles[];
 extern unsigned char knightPalette[];
 extern uint8_t music[];
+extern unsigned char VDPFunc;
+extern unsigned int palette0;
+extern unsigned int palette1;
+extern unsigned int blankTile;
+extern unsigned int tileData;
+extern unsigned int tileLength;
+extern unsigned int tileOffset;
+extern void isr(void);
+
+#define VDP_CMD_SET_PALETTE0    0x01
+#define VDP_CMD_SET_PALETTE1    0x02
+#define VDP_CMD_FILL_SCREEN     0x04
+#define VDP_CMD_LOAD_TILES      0x08
+#define VDP_CMD_SPRITE          0x10
+volatile unsigned char VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT
+        | VDP_REG_FLAGS1_8x16 | 0x80;
+
+unsigned char x = (256 / 2) - 8;
+unsigned char y = (192 / 2) - 8;
+unsigned int sprite = RIGHT_SPRITE;
 
 #ifdef DEBUG
 void print(uint8_t *string, uint8_t x, uint8_t y)
@@ -36,14 +56,26 @@ void print(uint8_t *string, uint8_t x, uint8_t y)
 }
 #endif
 
+void displayTilesheet(void)
+{
+    // Display the 256 entry tilesheet
+    __asm__("di");
+    for (int y = 0; y < 16; y++)
+    {
+        setVRAMAddr(TILEMAP_BASE + (y << 6));
+        for (int x = 0; x < 16; x++)
+        {
+            putTile((y * 16) + x);
+        }
+    }
+    __asm__("ei");
+}
+
 void main()
 {
-    uint8_t x = (256 / 2) - 8;
-    uint8_t y = (192 / 2) - 8;
     uint16_t startCount = 0;
     uint16_t endCount = 0;
     uint8_t str[33];
-    uint16_t sprite = RIGHT_SPRITE + ((x % 5) << 2);
     uint16_t dir;
 
     // Clear VRAM and CRAM
@@ -54,18 +86,22 @@ void main()
 
     // Setup the PSG
     psg_init();
-    add_raster_int(PSGFrame);
+    add_raster_int(isr);
     PSGPlay(music);
 
     bank(4);
     load_tiles(tiles, 0, (&tilesEnd - &tiles) / 32, 4);
     set_bkg_map(tileMap, 0, 0, 32, 24);
     load_palette(titlePal, 0, 16);
+    load_palette(titlePal, 16, 16);
+    set_vdp_reg(0x87, 0x00);
+
+    // Sprites use tiles >= 256.
+    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0xff);
     // Enable screen, frame interrupt & 8x16 sprites
     set_vdp_reg(VDP_REG_FLAGS1,
-            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
-    // Sprites use tiles >= 256, bits 1-0 need to be set for correct operation.
-    set_vdp_reg(VDP_REG_SPRITE_PATTERN_BASE, 0x04 | 0x03);
+            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16
+                    | 0x80);
 
     // Wait for 5 seconds
     for (int n = 0; n < 60 * 5; n++)
@@ -73,34 +109,57 @@ void main()
         __asm__("halt");
     }
 
+    // Set border
+    __asm__("di");
+    set_vdp_reg(0x87, 0x0f);
+    __asm__("ei");
+
     // Screen off
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    __asm__("di");
+    VDPReg1 = VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16 | 0x80;
+    set_vdp_reg(VDP_REG_FLAGS1, VDPReg1);
+    __asm__("ei");
 
     bank(3);
-    fillScreen(0x0b);
-    load_tiles(tilesheet, 0, 256, 4);
-    load_tiles(font, FONT_TILE_OFFSET, 96, 1);
-    load_tiles(knightTiles, RIGHT_SPRITE, 40, 4);
-    load_palette(tilesheetPal, 0, 16);
-    load_palette(knightPalette, 16, 16);
-    bank(2);
-    set_vdp_reg(VDP_REG_FLAGS1,
-            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    palette0 = tilesheetPal;
+    palette1 = knightPalette;
+    blankTile = 0x0b;
+    tileOffset = 0;
+    tileData = tilesheet;
+    tileLength = 256 << 5;
+    VDPFunc = VDP_CMD_SET_PALETTE0 | VDP_CMD_SET_PALETTE1 | VDP_CMD_FILL_SCREEN
+            | VDP_CMD_LOAD_TILES;
+    while (VDPFunc)
+        ;
 
-    // Display the 256 entry tilesheet
-    for (int y = 0; y < 16; y++)
-    {
-        setVRAMAddr(TILEMAP_BASE + (y << 6));
-        for (int x = 0; x < 16; x++)
-        {
-            putTile((y * 16) + x);
-        }
-    }
+    tileOffset = FONT_TILE_OFFSET << 5;
+    tileData = font;
+    tileLength = 192 << 5;
+    VDPFunc = VDP_CMD_LOAD_TILES;
+    while (VDPFunc)
+        ;
+
+    tileOffset = RIGHT_SPRITE << 5;
+    tileData = knightTiles;
+    tileLength = 40 << 5;
+    VDPFunc = VDP_CMD_LOAD_TILES;
+    while (VDPFunc)
+        ;
+    bank(2);
+
+    // Screen on
+    __asm__("di");
+    VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16
+            | 0x80;
+    set_vdp_reg(VDP_REG_FLAGS1, VDPReg1);
+    __asm__("ei");
+
+    displayTilesheet();
 
     while (1)
     {
         __asm__("halt");
-        __asm__("halt");
+//        __asm__("halt");
 #ifdef DEBUG
         startCount = readVCount();
 #endif
@@ -131,9 +190,10 @@ void main()
             sprite = RIGHT_SPRITE + ((x % 5) << 2);
         }
 
+        VDPFunc = VDP_CMD_SPRITE;
         // Update sprite pattern for animation
-        set_sprite(0, x, y - 1, sprite);
-        set_sprite(1, x + 8, y - 1, sprite + 2);
+//        set_sprite(0, x, y - 1, sprite);
+//        set_sprite(1, x + 8, y - 1, sprite + 2);
 #ifdef DEBUG
         endCount = readVCount();
 

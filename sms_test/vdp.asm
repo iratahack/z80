@@ -31,6 +31,7 @@
         public  _knightTiles
         public  _knightPalette
         public  _readVCount
+        public  _setSprite
 
         public  _setSpriteXY
         public  _readJoypad
@@ -38,7 +39,46 @@
 
         public  _bank
 
+        extern  _y
+        extern  _x
+        extern  _sprite
         section code_user
+
+
+_setSprite:
+        xor     0x10
+        push    af
+
+        xor     a                       ; Sprite 0
+        out     (VDP_Command), a
+        ld      a, +(SPRITE_INFO_TABLE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
+
+        ld      a, (_y)
+        dec     a
+        out     (VDP_Data), a
+        out     (VDP_Data), a
+
+        ld      a, 0x80
+        out     (VDP_Command), a
+        ld      a, +(SPRITE_INFO_TABLE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
+
+        ld      a, (_x)
+        ld      b, a
+        out     (VDP_Data), a
+        ld      a, (_sprite)
+        ld      c, a
+        out     (VDP_Data), a
+        ld      a, 8
+        add     b
+        out     (VDP_Data), a
+        ld      a, 2
+        add     c
+        out     (VDP_Data), a
+
+        pop     af
+        ret
 
         ;
         ; Map the specified ROM back to slot 2 (0x8000-0xBFFF).
@@ -376,12 +416,12 @@ _setVRAMAddr:
         push    af
 
         ld      a, l
-        di
+;        di
         out     (VDP_Command), a
         ld      a, h
         or      VDP_VRAM_Access
         out     (VDP_Command), a
-        ei
+;        ei
 
         pop     af
         ret
@@ -428,15 +468,14 @@ _setCRAMAddr:
 _fillScreen:
         push    af
         push    bc
+        di
 
         ; Reset the VRAM address
         xor     a
         ld      b, a
-        di
         out     (VDP_Command), a
         ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
         out     (VDP_Command), a
-        ei
 
         ; C - block count, where each block is 256 bytes
         ; B - Byte count for each block 0 = 256 bytes
@@ -457,6 +496,7 @@ fsLoop:
         dec     c
         jr      nz, fsLoop
 
+        ei
         pop     bc
         pop     af
         ret

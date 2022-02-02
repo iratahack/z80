@@ -29,5 +29,7 @@ __z88dk_fastcall;
 #define SPRITE_INFO_TABLE 0x3f00
 #define VDP_Data 0xbe
 #define VDP_Command 0xbf
+#define VDP_VRAM_Access 0x40
+#define VDP_CRAM_Access 0xc0
 
 #endif

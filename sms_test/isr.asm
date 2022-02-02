@@ -1,0 +1,179 @@
+
+        defc    TILEMAP_BASE=0x3800
+        defc    PATTERN_BASE=0x0000
+        defc    SPRITE_INFO_TABLE=0x3f00
+        defc    VDP_Data=0xbe
+        defc    VDP_Command=0xbf
+        defc    VDP_VCount=0x7e
+        defc    VDP_VRAM_Access=0x40
+        defc    VDP_CRAM_Access=0xc0
+
+        #define     VDP_CMD_SET_PALETTE0_BIT 0
+        #define     VDP_CMD_SET_PALETTE1_BIT 1
+        #define     VDP_CMD_FILL_SCREEN_BIT 2
+        #define     VDP_CMD_LOAD_TILES_BIT 3
+        #define     VDP_CMD_SPRITE_BIT 4
+
+        public  _isr
+        public  _VDPFunc
+        public  _palette0
+        public  _palette1
+        public  _blankTile
+        public  _tileData
+        public  _tileLength
+        public  _tileOffset
+
+        extern  _PSGFrame
+        extern  _VDPReg1
+        extern  _setSprite
+
+_isr:
+        ; Disable screen
+        ld      a, (_VDPReg1)
+        and     0xbf
+        out     (0xbf), a
+        ld      a, 0x81
+        out     (0xbf), a
+
+        ld      a, (_VDPFunc)
+
+        bit     VDP_CMD_SET_PALETTE0_BIT, a
+        call    nz, setPalette0
+        bit     VDP_CMD_SET_PALETTE1_BIT, a
+        call    nz, setPalette1
+        bit     VDP_CMD_FILL_SCREEN_BIT, a
+        call    nz, fillScreen
+        bit     VDP_CMD_LOAD_TILES_BIT, a
+        call    nz, loadTiles
+        bit     VDP_CMD_SPRITE_BIT, a
+        call    nz, _setSprite
+
+        ld      (_VDPFunc), a
+
+        ; Enable screen
+        ld      a, (_VDPReg1)
+        out     (0xbf), a
+        ld      a, 0x81
+        out     (0xbf), a
+
+        call    _PSGFrame
+
+        ret
+
+loadTiles:
+        xor     0x08
+        push    af
+
+        ld      hl, (_tileOffset)
+        ld      a, l
+        out     (VDP_Command), a
+        ld      a, h
+        or      VDP_VRAM_Access
+        out     (VDP_Command), a
+
+        ld      bc, (_tileLength)
+        ld      hl, (_tileData)
+
+        ld      a, b
+        or      a
+        jr      z, noBlock
+
+writeTileData:
+        push    bc
+
+        ; Send 256 bytes to VRAM
+        ld      bc, VDP_Data
+        otir
+
+        pop     bc
+        djnz    writeTileData
+
+noBlock:
+        ld      a, c
+        or      a
+        jr      z, done
+
+        ; Send remaining bytes to VRAM
+        ld      b, a
+        ld      c, VDP_Data
+        otir
+done:
+        pop     af
+        ret
+
+fillScreen:
+        xor     0x04
+        push    af
+
+        ld      hl, (_blankTile)        ;
+
+        ; Reset the VRAM address
+        xor     a
+        ld      b, a
+        out     (VDP_Command), a
+        ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
+        out     (VDP_Command), a
+
+        ; C - block count, where each block is 256 bytes
+        ; B - Byte count for each block 0 = 256 bytes
+        ld      c, 0x03
+fsLoop:
+        ld      a, l                    ; 4 Tile ID
+        out     (VDP_Data), a
+
+        ; 12
+        REPT    3
+        nop
+        ENDR
+
+        ld      a, h                    ; 4 Attribute
+        out     (VDP_Data), a
+        djnz    fsLoop
+
+        dec     c
+        jr      nz, fsLoop
+
+        pop     af
+        ret
+
+setPalette0:
+        xor     0x01
+        push    af
+        xor     a                       ; Start palette index
+        ld      hl, (_palette0)         ; Palette data
+        jr      setPalette
+
+setPalette1:
+        xor     0x02
+        push    af
+        ld      a, 0x10                 ; Start palette index
+        ld      hl, (_palette1)         ; Palette data
+
+setPalette:
+        out     (0xbf), a
+        ld      a, 0xc0
+        out     (0xbf), a
+
+        ld      c, 0xbe
+        REPT    16
+        outi
+        ENDR
+
+        pop     af
+        ret
+
+        section bss_user
+_VDPFunc:
+        ds      1
+_palette0:
+        ds      2
+_palette1:
+        ds      2
+_blankTile:
+        ds      2
+_tileData:
+        ds      2
+_tileLength:
+        ds      2
+_tileOffset:
+        ds      2
