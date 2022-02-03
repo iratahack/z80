@@ -42,9 +42,10 @@
         extern  _y
         extern  _x
         extern  _sprite
+        extern  asm_set_sprite
         section code_user
 
-
+IF  1
 _setSprite:
         xor     0x10
         push    af
@@ -79,7 +80,46 @@ _setSprite:
 
         pop     af
         ret
+ELSE
+_setSprite:
+        xor     0x10
+        push    af
 
+        ld      e, 0
+        ld      a, (_sprite)
+        ld      d, a
+        ld      a, (_y)
+        dec     a
+        ld      b, a
+        ld      a, (_x)
+        ld      c, a
+        push    de
+        push    bc
+        ; Parameters:
+        ; d = tile number
+        ; e = Sprite number
+        ; b = Sprite y position
+        ; c = Sprite x position
+        call    asm_set_sprite
+
+        pop     bc
+        pop     de
+        inc     d
+        inc     d
+        inc     e
+        ld      a, 8
+        add     c
+        ld      c, a
+        ; Parameters:
+        ; d = tile number
+        ; e = Sprite number
+        ; b = Sprite y position
+        ; c = Sprite x position
+        call    asm_set_sprite
+
+        pop     af
+        ret
+ENDIF
         ;
         ; Map the specified ROM back to slot 2 (0x8000-0xBFFF).
         ;

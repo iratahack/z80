@@ -110,15 +110,11 @@ void main()
     }
 
     // Set border
-    __asm__("di");
     set_vdp_reg(0x87, 0x0f);
-    __asm__("ei");
-
     // Screen off
-    __asm__("di");
     VDPReg1 = VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16 | 0x80;
     set_vdp_reg(VDP_REG_FLAGS1, VDPReg1);
-    __asm__("ei");
+    __asm__("halt");
 
     bank(3);
     palette0 = tilesheetPal;
@@ -148,11 +144,9 @@ void main()
     bank(2);
 
     // Screen on
-    __asm__("di");
     VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16
             | 0x80;
     set_vdp_reg(VDP_REG_FLAGS1, VDPReg1);
-    __asm__("ei");
 
     displayTilesheet();
 

@@ -26,7 +26,8 @@
         extern  _PSGFrame
         extern  _VDPReg1
         extern  _setSprite
-
+        extern  asm_load_palette
+        extern  asm_load_tiles
 _isr:
         ; Disable screen
         ld      a, (_VDPReg1)
@@ -60,6 +61,7 @@ _isr:
 
         ret
 
+IF  1
 loadTiles:
         xor     0x08
         push    af
@@ -100,6 +102,37 @@ noBlock:
 done:
         pop     af
         ret
+ELSE
+loadTiles:
+        xor     0x08
+        push    af
+        push    ix
+
+        ld      hl, (_tileOffset)
+        REPT    5
+        srl     h
+        rr      l
+        ENDR
+
+        ld      ix, (_tileData)
+        ld      bc, (_tileLength)
+        REPT    5
+        srl     b
+        rr      c
+        ENDR
+
+        ld      d, 4
+        ; Parameters:
+        ; hl = tile number to start at
+        ; ix = location of tile data
+        ; bc = No. of tiles to load
+        ; d  = bits per pixel
+        call    asm_load_tiles
+
+        pop     ix
+        pop     af
+        ret
+ENDIF
 
 fillScreen:
         xor     0x04
@@ -136,6 +169,7 @@ fsLoop:
         pop     af
         ret
 
+IF  1
 setPalette0:
         xor     0x01
         push    af
@@ -161,6 +195,27 @@ setPalette:
 
         pop     af
         ret
+ELSE
+setPalette0:
+        xor     0x01
+        push    af
+        ld      bc, 0x1000
+        ld      hl, (_palette0)         ; Palette data
+        jr      setPalette
+setPalette1:
+        xor     0x02
+        push    af
+        ld      bc, 0x1010
+        ld      hl, (_palette1)         ; Palette data
+setPalette:
+        ; Parameters:
+        ; hl = location
+        ; b  = number of values to write
+        ; c  = palette index to start at (<32)
+        call    asm_load_palette
+        pop     af
+        ret
+ENDIF
 
         section bss_user
 _VDPFunc:
