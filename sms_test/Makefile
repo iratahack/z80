@@ -33,7 +33,7 @@ dis: all
 
 %.o: %.c
 	@echo "Compiling $<"
-	@$(AS) $(TARGET) $(CFLAGS) -c $<
+	@$(CC) $(TARGET) $(CFLAGS) -c $<
 
 SMS_Sprites.nxt: SMS_Sprites.png Gfx2Next/bin/gfx2next
 	./Gfx2Next/bin/gfx2next -map-none -tile-y -pal-bgr222 -tile-planar4 $<
