@@ -1,3 +1,4 @@
+#include <font/font.h>
 #include <sms.h>
 #include <stdio.h>
 #include <psg.h>
@@ -35,6 +36,7 @@ extern void isr(void);
 #define VDP_CMD_FILL_SCREEN     0x04
 #define VDP_CMD_LOAD_TILES      0x08
 #define VDP_CMD_SPRITE          0x10
+#define VDP_CMD_LOAD_FONT       0x20
 volatile unsigned char VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT
         | VDP_REG_FLAGS1_8x16 | 0x80;
 
@@ -42,17 +44,20 @@ unsigned char x = (256 / 2) - 8;
 unsigned char y = (192 / 2) - 8;
 unsigned int sprite = RIGHT_SPRITE;
 
+#define DEBUG
+
 #ifdef DEBUG
 void print(uint8_t *string, uint8_t x, uint8_t y)
 {
     uint16_t tile;
 
+    __asm__("di");
     setVRAMAddr(TILEMAP_BASE + (y << 6) + (x << 1));
-
     while ((tile = *string++))
     {
         putTile((tile - 32) + FONT_TILE_OFFSET);
     }
+    __asm__("ei");
 }
 #endif
 
@@ -131,7 +136,7 @@ void main()
     tileOffset = FONT_TILE_OFFSET << 5;
     tileData = font;
     tileLength = 192 << 5;
-    VDPFunc = VDP_CMD_LOAD_TILES;
+    VDPFunc = VDP_CMD_LOAD_FONT;
     while (VDPFunc)
         ;
 

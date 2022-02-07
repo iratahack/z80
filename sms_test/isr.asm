@@ -13,6 +13,7 @@
         #define     VDP_CMD_FILL_SCREEN_BIT 2
         #define     VDP_CMD_LOAD_TILES_BIT 3
         #define     VDP_CMD_SPRITE_BIT 4
+        #define     VDP_CMD_LOAD_FONT 5
 
         public  _isr
         public  _VDPFunc
@@ -48,6 +49,8 @@ _isr:
         call    nz, loadTiles
         bit     VDP_CMD_SPRITE_BIT, a
         call    nz, _setSprite
+        bit     VDP_CMD_LOAD_FONT, a
+        call    nz, _loadFont
 
         ld      (_VDPFunc), a
 
@@ -59,6 +62,40 @@ _isr:
 
         call    _PSGFrame
 
+        ret
+
+_loadFont:
+        xor     1<<VDP_CMD_LOAD_FONT
+        push    af
+
+        ld      hl, (_tileOffset)
+        ld      a, l
+        out     (VDP_Command), a
+        ld      a, h
+        or      VDP_VRAM_Access
+        out     (VDP_Command), a
+
+        ld      bc, (_tileLength)
+        REPT    2
+        srl     b
+        rr      c
+        ENDR
+        ld      hl, (_tileData)
+
+writeFontData:
+        ld      a, (hl)
+        inc     hl
+        out     (VDP_Data), a
+        xor     a
+        out     (VDP_Data), a
+        out     (VDP_Data), a
+        out     (VDP_Data), a
+        dec     bc
+        ld      a, b
+        or      c
+        jr      nz, writeFontData
+
+        pop     af
         ret
 
 IF  1
