@@ -44,9 +44,8 @@ unsigned char x = (256 / 2) - 8;
 unsigned char y = (192 / 2) - 8;
 unsigned int sprite = RIGHT_SPRITE;
 
-#define DEBUG
-#define MAX_ACCEL	25
-#define MAX_PIXEL_FRAMES 64
+//#define DEBUG
+#define MAX_PIXEL_FRAMES 32
 
 #ifdef DEBUG
 void print(uint8_t *string, uint8_t x, uint8_t y)
@@ -85,8 +84,7 @@ void main()
     uint8_t str[33];
     uint16_t dir;
     unsigned char accel = MAX_PIXEL_FRAMES;
-    unsigned char frameCount = MAX_ACCEL;
-    unsigned char pixelFrames = MAX_PIXEL_FRAMES;
+    unsigned char pixelFrames = MAX_PIXEL_FRAMES >> 3;
     int8_t xSpeed = 0;
 
     // Clear VRAM and CRAM
@@ -186,10 +184,6 @@ void main()
         {
             xSpeed = -1;
 
-//			if (x > 0)
-//				x--;
-//			sprite = LEFT_SPRITE + ((x % 5) << 2);
-
             if (accel > 0)
                 accel--;
         }
@@ -197,10 +191,6 @@ void main()
         {
 
             xSpeed = 1;
-
-//			if (x < (256 - 16))
-//				x++;
-//			sprite = RIGHT_SPRITE + ((x % 5) << 2);
 
             if (accel > 0)
                 accel--;
@@ -215,31 +205,29 @@ void main()
 
         if (pixelFrames-- == 0)
         {
-            pixelFrames = accel >> 2;
-            if ((x < (256 - 16)) && (x >= 1))
+            pixelFrames = accel >> 3;
+
+            if ((x < (256 - 16)) && (xSpeed > 0))
             {
                 x += xSpeed;
-                if (xSpeed > 0)
-                    sprite = RIGHT_SPRITE + ((x % 5) << 2);
-                else if (xSpeed < 0)
-                    sprite = LEFT_SPRITE + ((x % 5) << 2);
+                sprite = RIGHT_SPRITE + ((x % 5) << 2);
+            }
+
+            if ((x > 0) && (xSpeed < 0))
+            {
+                x += xSpeed;
+                sprite = LEFT_SPRITE + ((x % 5) << 2);
             }
         }
 
         VDPFunc = VDP_CMD_SPRITE;
         // Update sprite pattern for animation
-//        set_sprite(0, x, y - 1, sprite);
-//        set_sprite(1, x + 8, y - 1, sprite + 2);
 #ifdef DEBUG
-//		sprintf(str, "accel = %03d", accel);
-//		print(str, 0, 23);
-#if 0
         endCount = readVCount();
 
         // Display the co-ords for sprite top-left
         sprintf(str, "X=%3d, Y=%3d, V-Count=%3d", x, y, endCount - startCount);
         print(str, 0, 23);
-#endif
 #endif
     }
 }
