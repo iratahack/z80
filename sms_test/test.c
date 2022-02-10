@@ -44,7 +44,7 @@ unsigned char x = (256 / 2) - 8;
 unsigned char y = (192 / 2) - 8;
 unsigned int sprite = RIGHT_SPRITE;
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 void print(uint8_t *string, uint8_t x, uint8_t y)
@@ -82,6 +82,8 @@ void main()
     uint16_t endCount = 0;
     uint8_t str[33];
     uint16_t dir;
+    unsigned char frame = 0;
+    unsigned char rotate = 0;
 
     // Clear VRAM and CRAM
     clear_vram();
@@ -146,7 +148,7 @@ void main()
     VDPFunc = VDP_CMD_LOAD_TILES;
     while (VDPFunc)
         ;
-    bank(2);
+//    bank(2);
 
     // Screen on
     VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16
@@ -190,9 +192,13 @@ void main()
         }
 
         VDPFunc = VDP_CMD_SPRITE;
-        // Update sprite pattern for animation
-//        set_sprite(0, x, y - 1, sprite);
-//        set_sprite(1, x + 8, y - 1, sprite + 2);
+        if ((rotate++ % 6) == 0)
+        {
+            tileOffset = (6 * 16) << 5;
+            tileData = &tilesheet[((6 * 16) << 5) + ((frame++ & 0x03) << 5)];
+            tileLength = 1 << 5;
+            VDPFunc |= VDP_CMD_LOAD_TILES;
+        }
 #ifdef DEBUG
         endCount = readVCount();
 
@@ -200,5 +206,6 @@ void main()
         sprintf(str, "X=%3d, Y=%3d, V-Count=%3d", x, y, endCount - startCount);
         print(str, 0, 23);
 #endif
+
     }
 }
