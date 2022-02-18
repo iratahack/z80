@@ -1,9 +1,15 @@
-AS=z88dk-asmpp
+ifeq ($(OS),Windows_NT)
+SUFFIX=.exe
+else
+SUFFIX=
+endif
+
+AS=z88dk-z80asm
 LD=z88dk-z80asm
 
 PROJECT_NAME=sprite
 ASMSRC=sprite.asm tiles.asm levels.asm knight.asm
-ZXSTLC=./tools/zxstlc_linux
+ZXSTLC=./tools/zxstlc$(SUFFIX)
 
 LDFLAGS=-mz80n -m -b
 ASFLAGS=-mz80n
@@ -23,7 +29,7 @@ clean:
 	rm -f *.[oid] *.tap *.bin *.map *.dsk
 
 run: $(PROJECT_NAME).tap
-	~/ZEsarUX-10.0/zesarux $<
+	zesarux $<
 
 rundsk: $(PROJECT_NAME).dsk
 	fuse $<
