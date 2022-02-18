@@ -1,4 +1,4 @@
-AS=z88dk-asmpp
+AS=z88dk-z80asm
 LD=zcc
 PROJ=sprite
 PRAGMA_FILE=zpragma.inc
@@ -42,6 +42,7 @@ endif
 	@$(LD) $(LDFLAGS) $(OBJECTS) -o $(PROJ) -create-app -subtype=dsk
 
 %.o: %.asm
+	@echo "Assembling $<"
 	@$(AS) $(ASFLAGS) $<
 
 -include $(ASMSRC:.asm=.d)
