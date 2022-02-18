@@ -1,5 +1,4 @@
 PROJ:=test
-SUFFIX:=.exe
 
 CC:=zcc
 AS:=zcc
@@ -22,7 +21,7 @@ all: Gfx2Next $(PROJ).sms
 	@$(LD) $(TARGET) $(LDFLAGS) -o $(PROJ).bin $(OBJS) -create-app
 
 run: all
-	blastem$(SUFFIX) -m sms test.sms
+	blastem -m sms test.sms
 
 dis: all
 	z88dk-dis -mz80 -x $(PROJ).map $(PROJ).bin | less
