@@ -63,14 +63,15 @@ void print(uint8_t *string, uint8_t x, uint8_t y)
 
 void displayTilesheet(void)
 {
+    unsigned char tile = 0;
     // Display the 256 entry tilesheet
     __asm__("di");
-    for (int y = 0; y < 16; y++)
+    for (int y = 2; y < 18; y++)
     {
-        setVRAMAddr(TILEMAP_BASE + (y << 6));
+        setVRAMAddr(TILEMAP_BASE + (y << 6) + 2);
         for (int x = 0; x < 16; x++)
         {
-            putTile((y * 16) + x);
+            putTile(tile++);
         }
     }
     __asm__("ei");
@@ -98,9 +99,10 @@ void main()
 
     bank(4);
     load_tiles(tiles, 0, (&tilesEnd - &tiles) / 32, 4);
-    set_bkg_map(tileMap, 0, 0, 32, 24);
+    set_bkg_map(tileMap, 0, 2, 32, 24);
+    // Center visible screen vertically ready for scrolling
+    scroll_bkg(0, 16);
     load_palette(titlePal, 0, 16);
-    load_palette(titlePal, 16, 16);
     set_vdp_reg(0x87, 0x00);
 
     // Sprites use tiles >= 256.
@@ -118,6 +120,8 @@ void main()
 
     // Set border
     set_vdp_reg(0x87, 0x0f);
+    // Disable column 0 ready for horizontal scrolling
+    set_vdp_reg(VDP_REG_FLAGS0, 0x26);            
     // Screen off
     VDPReg1 = VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16 | 0x80;
     set_vdp_reg(VDP_REG_FLAGS1, VDPReg1);
@@ -180,7 +184,7 @@ void main()
         }
         if (dir & JOY_LEFT)
         {
-            if (x > 0)
+            if (x > 8)
                 x--;
             sprite = LEFT_SPRITE + ((x % 5) << 2);
         }

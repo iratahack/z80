@@ -178,8 +178,8 @@ fillScreen:
         ld      hl, (_blankTile)        ;
 
         ; Reset the VRAM address
-        xor     a
-        ld      b, a
+        ld      b, 0
+        ld      a, 128
         out     (VDP_Command), a
         ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
         out     (VDP_Command), a
