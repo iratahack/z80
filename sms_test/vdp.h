@@ -23,6 +23,8 @@ extern uint16_t readVCount(void)
 __z88dk_fastcall;
 extern void bank(uint8_t bank)
 __z88dk_fastcall;
+extern void scrollx(uint8_t x)
+__z88dk_fastcall;
 
 #define PATTERN_BASE 0x0000
 #define TILEMAP_BASE 0x3800

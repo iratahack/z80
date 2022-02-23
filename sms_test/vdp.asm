@@ -39,11 +39,20 @@
 
         public  _bank
 
+        public  _scrollx
+
         extern  _y
         extern  _x
         extern  _sprite
         extern  asm_set_sprite
         section code_user
+
+_scrollx:
+        ld      a, l
+        out     (VDP_Command), a   ; Output value
+        ld      a, $80|$08      ; Output to VDP register 8 (X Scroll)
+        out     (VDP_Command), a
+        ret
 
 IF  1
 _setSprite:
@@ -453,17 +462,11 @@ _putTile:
         ;   N/A
         ;
 _setVRAMAddr:
-        push    af
-
         ld      a, l
-;        di
         out     (VDP_Command), a
         ld      a, h
         or      VDP_VRAM_Access
         out     (VDP_Command), a
-;        ei
-
-        pop     af
         ret
 
         ;

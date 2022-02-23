@@ -16,7 +16,7 @@ OBJS:=$(CSRC:.c=.o) $(ASMSRC:.asm=.o)
 
 all: Gfx2Next $(PROJ).sms
 
-%.sms: $(OBJS) Makefile tilesheet.nxt title2.nxt SMS_Sprites.nxt
+%.sms: $(OBJS) Makefile tilesheet.nxt title2.nxt SMS_Sprites.nxt levels.nxm
 	@echo "Linking $@"
 	@$(LD) $(TARGET) $(LDFLAGS) -o $(PROJ).bin $(OBJS) -create-app
 
@@ -42,6 +42,9 @@ tilesheet.nxt: tilesheet.png Gfx2Next/bin/gfx2next
 
 title2.nxt: title2.png Gfx2Next/bin/gfx2next
 	./Gfx2Next/bin/gfx2next -map-sms -pal-bgr222 -tile-nomirror -tile-planar4 $<
+
+levels.nxm: levels.tmx Gfx2Next/bin/gfx2next
+	./Gfx2Next/bin/gfx2next -tiled -pal-none -tile-none -tiled-blank=11 $<
 
 Gfx2Next:
 	git clone --depth=1 https://github.com/headkaze/Gfx2Next.git
