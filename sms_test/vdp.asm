@@ -234,8 +234,8 @@ _setSpriteXY:
         add     iy, sp
 
         ld      a, (iy+4)               ; Sprite ID
-        ld      b, (iy+2)               ; Sprite Y pos
-        ld      c, l                    ; Sprite X pos
+        ld      c, (iy+2)               ; Sprite X pos
+        ld      b, l                    ; Sprite Y pos
         ;
         ; Set the X & Y position of the specified sprite.
         ;

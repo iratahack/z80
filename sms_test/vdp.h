@@ -11,20 +11,15 @@ extern void putTile(uint16_t tileID)
 __z88dk_fastcall;
 extern void loadFullMap(uint16_t *addr)
 __z88dk_fastcall;
-extern void loadTileset(uint8_t *addr, uint16_t count)
-__z88dk_fastcall;
-extern void setSpriteXY(uint8_t spriteID, uint8_t xPos, uint8_t yPos)
-__z88dk_fastcall;
-extern void setSpritePattern(uint8_t spriteID, uint8_t patternID)
-__z88dk_fastcall;
-extern uint16_t readJoypad(void)
-__z88dk_fastcall;
-extern uint16_t readVCount(void)
-__z88dk_fastcall;
 extern void bank(uint8_t bank)
 __z88dk_fastcall;
 extern void scrollx(uint8_t x)
 __z88dk_fastcall;
+extern void loadTileset(uint8_t *addr, uint16_t count);
+extern void setSpriteXY(uint8_t spriteID, uint8_t xPos, uint8_t yPos);
+extern void setSpritePattern(uint8_t spriteID, uint8_t patternID);
+extern uint16_t readJoypad(void);
+extern uint16_t readVCount(void);
 
 #define PATTERN_BASE 0x0000
 #define TILEMAP_BASE 0x3800

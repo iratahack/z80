@@ -5,7 +5,7 @@ AS:=zcc
 LD:=zcc
 
 ASFLAGS:=
-CFLAGS:=-O2
+CFLAGS:=-O2 -Wall
 LDFLAGS:=-m
 TARGET?= +sms
 ASMSRC:=$(wildcard *.asm)
@@ -13,6 +13,7 @@ CSRC:=$(wildcard *.c)
 OBJS:=$(CSRC:.c=.o) $(ASMSRC:.asm=.o)
 
 .PHONY: all clean run dis
+.PRECIOUS: %.o
 
 all: Gfx2Next $(PROJ).sms
 
@@ -53,4 +54,4 @@ Gfx2Next/bin/gfx2next: Gfx2Next
 	make -C Gfx2Next
 
 clean:
-	rm -f *.map *.bin *.sms *.nxp *.nxt *.nxm
+	rm -f *.o *.map *.bin *.sms *.nxp *.nxt *.nxm
