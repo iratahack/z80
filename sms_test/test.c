@@ -33,6 +33,7 @@ extern unsigned int blankTile;
 extern unsigned int tileData;
 extern unsigned int tileLength;
 extern unsigned int tileOffset;
+extern unsigned int timer;
 extern void isr(void);
 
 #define VDP_CMD_SET_PALETTE0 0x01
@@ -41,7 +42,7 @@ extern void isr(void);
 #define VDP_CMD_LOAD_TILES 0x08
 #define VDP_CMD_SPRITE 0x10
 #define VDP_CMD_LOAD_FONT 0x20
-volatile unsigned char VDPReg1 = VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16 | 0x80;
+volatile unsigned char VDPReg1;
 
 unsigned char x = (256 / 2) - 8;
 unsigned char y = (192 / 2) - 8;
@@ -50,7 +51,7 @@ unsigned int tilemapX = 0;
 unsigned int tilemapY = 0;
 unsigned int scrollX = 0;
 unsigned int scrollY = 16;
-char knightFrame;
+unsigned char knightFrame;
 extern unsigned char levels[LEVEL_MAP_HEIGHT][LEVEL_MAP_WIDTH];
 
 void print(char *string, uint8_t x, uint8_t y)
@@ -84,14 +85,20 @@ void displayTilesheet(void)
 
 void displayLevel(void)
 {
+    unsigned int VRAMAddr = TILEMAP_BASE + 256 + 2;
+    unsigned char *tile = &levels[tilemapY][tilemapX];
+    unsigned char x, y;
+
     __asm__("di");
-    for (unsigned char y = 0; y < 22; y++)
+    for (y = 0; y < 22; y++)
     {
-        setVRAMAddr(TILEMAP_BASE + ((y + 4) << 6) + 2);
-        for (unsigned char x = 0; x < 31; x++)
+        setVRAMAddr(VRAMAddr);
+        for (x = 0; x < 31; x++)
         {
-            putTile(levels[tilemapY + y][tilemapX + x]);
+            putTile(*tile++);
         }
+        tile += 128 - 31;
+        VRAMAddr += 64;
     }
     __asm__("ei");
 }
@@ -100,15 +107,17 @@ char scrollLeft(void)
 {
     char rv = FALSE;
     int offset = scrollX * -1;
+
     if (offset < 0x308)
     {
         if ((scrollX & 0x07) == 0)
         {
-            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2));
+            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
             unsigned char *tile = &levels[tilemapY][(offset >> 3) + 31];
+            unsigned char y;
             // Load the next column to the right to the tilemap
             __asm__("di");
-            for (unsigned char y = 0; y < 22; y++)
+            for (y = 0; y < 22; y++)
             {
                 setVRAMAddr(VRAMAddr);
                 VRAMAddr += 64;
@@ -127,15 +136,17 @@ char scrollRight(void)
 {
     char rv = FALSE;
     int offset = scrollX * -1;
+
     if (offset > 0)
     {
         if ((scrollX & 0x07) == 0)
         {
-            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2));
+            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
             unsigned char *tile = &levels[tilemapY][(offset >> 3) - 1];
+            unsigned char y;
             // Load the next column to the right to the tilemap
             __asm__("di");
-            for (unsigned char y = 0; y < 22; y++)
+            for (y = 0; y < 22; y++)
             {
                 setVRAMAddr(VRAMAddr);
                 VRAMAddr += 64;
@@ -196,7 +207,7 @@ void updateVRAM(void)
 {
     static unsigned char frame = 0;
     static unsigned char rotate = 0;
-    char flicker;
+    unsigned char flicker;
 
     // Update VRAM in refresh
     __asm__("halt");
@@ -216,7 +227,7 @@ void updateVRAM(void)
     }
 
     // Flicker lanterns
-    if (rotate & 1)
+    if (timer & 1)
     {
         flicker = (char)rand();
         load_tiles(&tilesheet[12 + (flicker & 0x03) << 5], 3, 1, 4);
