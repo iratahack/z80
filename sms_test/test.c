@@ -16,6 +16,10 @@
 #define LEVEL_MAP_WIDTH 128
 #define LEVEL_MAP_HEIGHT 126
 
+#define FIX_POINT(a, b)     ((a<<4) | b)
+#define X_SPEED FIX_POINT(0, 4)
+#define INT(a)  (a>>4)
+
 extern unsigned char tilesheetPal[];
 extern unsigned char tilesheet[];
 extern unsigned char titlePal[];
@@ -44,14 +48,16 @@ extern void isr(void);
 #define VDP_CMD_LOAD_FONT 0x20
 volatile unsigned char VDPReg1;
 
-unsigned char x = (256 / 2) - 8;
-unsigned char y = (192 / 2) - 8;
+unsigned int x = FIX_POINT((256 / 2) - 8, 0);
+unsigned int y = FIX_POINT((192 / 2) - 8, 0);
+int xSpeed = 0;
+int ySpeed = 0;
 unsigned int sprite = RIGHT_SPRITE;
 unsigned int tilemapX = 0;
 unsigned int tilemapY = 0;
 unsigned int scrollX = 0;
 unsigned int scrollY = 16;
-unsigned char knightFrame;
+char knightFrame;
 extern unsigned char levels[LEVEL_MAP_HEIGHT][LEVEL_MAP_WIDTH];
 
 void print(char *string, uint8_t x, uint8_t y)
@@ -106,14 +112,14 @@ void displayLevel(void)
 char scrollLeft(void)
 {
     char rv = FALSE;
-    int offset = scrollX * -1;
+    int offset = INT(scrollX * -1);
 
     if (offset < 0x308)
     {
-        if ((scrollX & 0x07) == 0)
+        if ((offset & 0x07) == 0)
         {
             unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
-            unsigned char *tile = &levels[tilemapY][(offset >> 3) + 31];
+            unsigned char *tile = &levels[tilemapY][((offset >> 3) & 0x7f) + 31];
             unsigned char y;
             // Load the next column to the right to the tilemap
             __asm__("di");
@@ -126,7 +132,7 @@ char scrollLeft(void)
             }
             __asm__("ei");
         }
-        scrollX--;
+        scrollX -= X_SPEED;
         rv = TRUE;
     }
     return (rv);
@@ -135,14 +141,14 @@ char scrollLeft(void)
 char scrollRight(void)
 {
     char rv = FALSE;
-    int offset = scrollX * -1;
+    int offset = INT(scrollX * -1);
 
     if (offset > 0)
     {
-        if ((scrollX & 0x07) == 0)
+        if ((offset & 0x07) == 0)
         {
             unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
-            unsigned char *tile = &levels[tilemapY][(offset >> 3) - 1];
+            unsigned char *tile = &levels[tilemapY][((offset >> 3) & 0x7f) - 1];
             unsigned char y;
             // Load the next column to the right to the tilemap
             __asm__("di");
@@ -155,7 +161,7 @@ char scrollRight(void)
             }
             __asm__("ei");
         }
-        scrollX++;
+        scrollX += X_SPEED;
         rv = TRUE;
     }
     return (rv);
@@ -213,11 +219,11 @@ void updateVRAM(void)
     __asm__("halt");
 
     // Update screen scrolling
-    scrollx(scrollX & 0xff);
+    scrollx(INT(scrollX) & 0xff);
 
     // Update player sprite
-    set_sprite(0, x, y - 1, sprite + (knightFrame << 2));
-    set_sprite(1, x + 8, y - 1, sprite + 2 + (knightFrame << 2));
+    set_sprite(0, INT(x), INT(y) - 1, sprite + (INT(knightFrame) << 2));
+    set_sprite(1, INT(x) + 8, INT(y) - 1, sprite + 2 + (INT(knightFrame) << 2));
 
     // Rotate coins
     if (rotate++ == 8)
@@ -229,7 +235,7 @@ void updateVRAM(void)
     // Flicker lanterns
     if (timer & 1)
     {
-        flicker = (char)rand();
+        flicker = (char) rand();
         load_tiles(&tilesheet[12 + (flicker & 0x03) << 5], 3, 1, 4);
     }
 }
@@ -267,7 +273,8 @@ void main(void)
     fillScreen(0x0b);
 
     // Screen on
-    set_vdp_reg(VDP_REG_FLAGS1, VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
+    set_vdp_reg(VDP_REG_FLAGS1,
+            VDP_REG_FLAGS1_SCREEN | VDP_REG_FLAGS1_VINT | VDP_REG_FLAGS1_8x16);
 
     newGame();
 
@@ -279,74 +286,61 @@ void main(void)
         // Update sprite position
         if (dir & JOY_UP)
         {
-            if (y > 16)
+            if (INT(y) > 16)
                 y--;
         }
         if (dir & JOY_DOWN)
         {
-            if (y < (192 - 16))
+            if (INT(y) < (192 - 16))
                 y++;
         }
 
+        xSpeed = 0;
         if (dir & JOY_LEFT)
         {
-            if (x > 8 + 64)
+            if (INT(x) > 8 + 64)
             {
-                x--;
-                if (knightFrame-- == 0)
-                {
-                    knightFrame = 4;
-                }
+                xSpeed = -X_SPEED;
             }
             else
             {
                 if (scrollRight() == FALSE)
                 {
-                    if (x > 8)
+                    if (INT(x) > 8)
                     {
-                        x--;
-                        if (knightFrame-- == 0)
-                        {
-                            knightFrame = 4;
-                        }
+                        xSpeed = -X_SPEED;
                     }
                 }
                 else
                 {
-                    if (knightFrame-- == 0)
+                    if (knightFrame <= 0)
                     {
-                        knightFrame = 4;
+                        knightFrame = FIX_POINT(5, 0);
                     }
+                    knightFrame -= X_SPEED;
                 }
             }
             sprite = LEFT_SPRITE;
         }
         else if (dir & JOY_RIGHT)
         {
-            if (x < (256 - 16 - 64))
+            if (INT(x) < (256 - 16 - 64))
             {
-                x++;
-                if (knightFrame++ == 4)
-                {
-                    knightFrame = 0;
-                }
+                xSpeed = X_SPEED;
             }
             else
             {
                 if (scrollLeft() == FALSE)
                 {
-                    if (x < (256 - 16))
+                    if (INT(x) < (256 - 16))
                     {
-                        x++;
-                        if (knightFrame++ == 4)
-                        {
-                            knightFrame = 0;
-                        }
+                        xSpeed = X_SPEED;
                     }
                 }
                 else
                 {
-                    if (knightFrame++ == 4)
+                    knightFrame += X_SPEED;
+                    if (knightFrame >= FIX_POINT(5, 0))
                     {
                         knightFrame = 0;
                     }
@@ -356,7 +350,30 @@ void main(void)
         }
         else
         {
+            // Set sprite to standing
             knightFrame = 0;
+            // Clear any accumulated x-speed
+            x &= 0xfff0;
+        }
+
+        x += xSpeed;
+        y += ySpeed;
+
+        if (xSpeed < 0) // Moving left
+        {
+            if (knightFrame <= 0)
+            {
+                knightFrame = FIX_POINT(5, 0);
+            }
+            knightFrame -= X_SPEED;
+        }
+        else if (xSpeed > 0) // Moving right
+        {
+            knightFrame += X_SPEED;
+            if (knightFrame >= FIX_POINT(5, 0))
+            {
+                knightFrame = 0;
+            }
         }
 
         updateVRAM();
