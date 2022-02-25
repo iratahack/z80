@@ -12,6 +12,30 @@ extern char knightFrame;
 
 #define ID_SOFT_TILE    (10*16)
 
+void setFalling(void)
+{
+    // Set falling flag
+    falling = TRUE;
+
+    // Set sprite to standing
+    knightFrame = 0;
+    // Clear any accumulated x-speed
+    x &= 0xfff0;
+    // Set speed to 0
+    xSpeed = 0;
+}
+
+void clearFalling(void)
+{
+    // Clear falling flag
+    falling = FALSE;
+
+    // Set speed to 0
+    ySpeed = 0;
+    // Clear any accumulated y-speed
+    y &= 0xfff0;
+}
+
 void doGravity(void)
 {
     unsigned int tileX;
@@ -19,37 +43,44 @@ void doGravity(void)
     ySpeed = Y_SPEED;
 
     // Convert player relative screen position to
-    // absolute level map.
+    // absolute level map. Screen is offset by 8
+    // so subtract that but player left foot is
+    // 4 pixels from the edge of the tile so add
+    // that. The result is we subtract 4, which
+    // can be seen below.
     tileX = (INT(x) + INT(scrollX * -1) - 4) >> 3;
     tileY = INT(y) >> 3;
 
 #ifdef DEBUG
     {
         char str[33];
-        sprintf(str, "tileX=%3d", tileX);
+        sprintf(str, "pix=%3d", (INT(x) + INT(scrollX * -1) - 4));
         print(str, 1, 23);
     }
 #endif
 
-    // If tile below players position is solid
-    // zero gravity.
-    if (levels[tileY][tileX] >= ID_SOFT_TILE
-            || levels[tileY][tileX + 1] >= ID_SOFT_TILE)
+    // Check if the tile under the left side of
+    // the players left foot is solid
+    if (levels[tileY][tileX] >= ID_SOFT_TILE)
     {
-        ySpeed = 0;
-        y &= 0xfff0;
-        falling = FALSE;
+        clearFalling();
+    }
+    // If the left side of the players left foot is not
+    // tile aligned we need to check the tile to the
+    // right also.
+    else if ((INT(x) + INT(scrollX * -1) - 4) & 0x07)
+    {
+        if (levels[tileY][tileX + 1] >= ID_SOFT_TILE)
+        {
+            clearFalling();
+        }
+        else
+        {
+            setFalling();
+        }
     }
     else
     {
-        // Set falling flag
-        falling = TRUE;
-
-        // Set sprite to standing
-        knightFrame = 0;
-        // Clear any accumulated x-speed
-        x &= 0xfff0;
-        // Set speed to 0
-        xSpeed = 0;
+        setFalling();
     }
 }
