@@ -26,6 +26,7 @@ int scrollX; // Current screen X scroll position
 int scrollY; // Current screen Y scroll position
 char knightFrame;
 char falling;
+char jumping;
 
 void init(void)
 {
@@ -94,7 +95,8 @@ void main(void)
         // Read joypad
         dir = read_joypad1();
 
-        doGravity();
+        if (!jumping)
+            doGravity();
 
         // Update sprite position
         if (dir & JOY_UP)
@@ -105,6 +107,21 @@ void main(void)
 
         if (!falling)
         {
+            if (jumping)
+            {
+                if (ySpeed < 0)
+                    // Reduce upward speed
+                    ySpeed += FIX_POINT(0, 4);
+                else
+                    jumping = FALSE;
+            }
+            else if (dir & JOY_FIREA)
+            {
+                jumping = TRUE;
+                // Start jump speed
+                ySpeed = -FIX_POINT(3, 0);
+            }
+
             if (dir & JOY_LEFT)
             {
                 xSpeed = -X_SPEED;

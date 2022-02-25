@@ -5,7 +5,7 @@
 #define INT(a)  (a>>4)
 
 #define X_SPEED FIX_POINT(0, 8)
-#define Y_SPEED FIX_POINT(0, 8)
+#define Y_SPEED FIX_POINT(1, 0)
 
 #define RIGHT_SPRITE (FONT_TILE_OFFSET + 96)
 #define LEFT_SPRITE (RIGHT_SPRITE + 20)

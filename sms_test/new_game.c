@@ -13,6 +13,7 @@ extern int scrollX;
 extern int scrollY;
 extern char knightFrame;
 extern char falling;
+extern char jumping;
 
 void newGame(void)
 {
@@ -40,7 +41,8 @@ void newGame(void)
 
     xSpeed = 0;
     ySpeed = 0;
-    falling = 0;
+    falling = FALSE;
+    jumping = FALSE;
 
     sprite = RIGHT_SPRITE;
     tilemapX = 0;
