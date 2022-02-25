@@ -11,7 +11,9 @@
 
 extern unsigned char music[];
 extern unsigned int timer;
+extern char updateColumn;
 extern void isr(void);
+extern void drawColumn(void);
 
 int x; // Player on-screen X pixel position
 int y; // Player on-screen Y pixel position
@@ -38,6 +40,8 @@ void init(void)
         setSpriteXY(n, 0, 0xd1);
     __asm__("ei");
 
+    updateColumn = FALSE;
+
     // Setup the PSG
     psg_init();
     add_raster_int(isr);
@@ -54,6 +58,8 @@ void updateVRAM(void)
 
     // Update screen scrolling
     scrollx(INT(scrollX) & 0xff);
+    // Draw the next/previous column of the tilemap
+    drawColumn();
 
     // Update player sprite
     set_sprite(0, INT(x), INT(y) - 1, sprite + (INT(knightFrame) << 2));
@@ -79,7 +85,7 @@ void main(void)
 
     init();
 
-    displayTitleScreen(3);
+//    displayTitleScreen(3);
 
     newGame();
 

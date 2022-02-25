@@ -6,60 +6,67 @@ extern int scrollX;
 extern int xSpeed;
 extern int tilemapY;
 
+static unsigned int VRAMAddr;
+static unsigned char *tile;
+char updateColumn;
+
+void drawColumn(void)
+{
+    unsigned char y;
+    if (updateColumn == TRUE)
+    {
+        // Load the next column to the tilemap
+        __asm__("di");
+        for (y = 0; y < 22; y++)
+        {
+            setVRAMAddr(VRAMAddr);
+            VRAMAddr += 64;
+            putTile(*tile);
+            tile += LEVEL_MAP_WIDTH;
+        }
+        __asm__("ei");
+        updateColumn = FALSE;
+    }
+}
+
 char scrollLeft(void)
 {
-    char rv = FALSE;
     int offset = INT(scrollX * -1);
+
+    updateColumn = FALSE;
 
     if (offset < 0x308)
     {
         if ((offset & 0x07) == 0)
         {
-            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
-            unsigned char *tile = &levels[tilemapY][((offset >> 3) & 0x7f) + 31];
-            unsigned char y;
-            // Load the next column to the right to the tilemap
-            __asm__("di");
-            for (y = 0; y < 22; y++)
-            {
-                setVRAMAddr(VRAMAddr);
-                VRAMAddr += 64;
-                putTile(*tile);
-                tile += LEVEL_MAP_WIDTH;
-            }
-            __asm__("ei");
+            VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
+            tile = &levels[tilemapY][((offset >> 3) & 0x7f) + 31];
+
+            updateColumn = TRUE;
         }
         scrollX -= xSpeed;
-        rv = TRUE;
+        return (TRUE);
     }
-    return (rv);
+    return (FALSE);
 }
 
 char scrollRight(void)
 {
-    char rv = FALSE;
     int offset = INT(scrollX * -1);
+
+    updateColumn = FALSE;
 
     if (offset > 0)
     {
         if ((offset & 0x07) == 0)
         {
-            unsigned int VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
-            unsigned char *tile = &levels[tilemapY][((offset >> 3) & 0x7f) - 1];
-            unsigned char y;
-            // Load the next column to the right to the tilemap
-            __asm__("di");
-            for (y = 0; y < 22; y++)
-            {
-                setVRAMAddr(VRAMAddr);
-                VRAMAddr += 64;
-                putTile(*tile);
-                tile += LEVEL_MAP_WIDTH;
-            }
-            __asm__("ei");
+            VRAMAddr = TILEMAP_BASE + 256 + ((offset >> 2) & 0x3f);
+            tile = &levels[tilemapY][((offset >> 3) & 0x7f) - 1];
+
+            updateColumn = TRUE;
         }
         scrollX -= xSpeed;
-        rv = TRUE;
+        return (TRUE);
     }
-    return (rv);
+    return (FALSE);
 }
