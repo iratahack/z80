@@ -2,16 +2,17 @@
 #include "vdp.h"
 #include "test.h"
 
-extern char knightFrame;
-extern unsigned int x;
-extern unsigned int y;
+extern int x;
+extern int y;
 extern int xSpeed;
 extern int ySpeed;
-extern unsigned int sprite;
-extern unsigned int tilemapX;
-extern unsigned int tilemapY;
-extern unsigned int scrollX;
-extern unsigned int scrollY;
+extern int sprite;
+extern int tilemapX;
+extern int tilemapY;
+extern int scrollX;
+extern int scrollY;
+extern char knightFrame;
+extern char falling;
 
 void newGame(void)
 {
@@ -39,6 +40,7 @@ void newGame(void)
 
     xSpeed = 0;
     ySpeed = 0;
+    falling = 0;
 
     sprite = RIGHT_SPRITE;
     tilemapX = 0;

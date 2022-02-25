@@ -17,5 +17,6 @@ extern char scrollLeft(void);
 extern char scrollRight(void);
 extern void displayTitleScreen(char seconds);
 extern void newGame(void);
+extern void doGravity(void);
 
 #endif

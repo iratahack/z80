@@ -9,35 +9,21 @@
 
 #define VDP_REG_SPRITE_PATTERN_BASE 0x86
 
-extern uint8_t music[];
-extern unsigned char VDPFunc;
-extern unsigned int palette0;
-extern unsigned int palette1;
-extern unsigned int blankTile;
-extern unsigned int tileData;
-extern unsigned int tileLength;
-extern unsigned int tileOffset;
+extern unsigned char music[];
 extern unsigned int timer;
 extern void isr(void);
 
-#define VDP_CMD_SET_PALETTE0 0x01
-#define VDP_CMD_SET_PALETTE1 0x02
-#define VDP_CMD_FILL_SCREEN 0x04
-#define VDP_CMD_LOAD_TILES 0x08
-#define VDP_CMD_SPRITE 0x10
-#define VDP_CMD_LOAD_FONT 0x20
-volatile unsigned char VDPReg1;
-
-unsigned int x;
-unsigned int y;
-int xSpeed;
-int ySpeed;
-unsigned int sprite;
-unsigned int tilemapX;
-unsigned int tilemapY;
-unsigned int scrollX;
-unsigned int scrollY;
+int x; // Player on-screen X pixel position
+int y; // Player on-screen Y pixel position
+int xSpeed; // Player on-screen X speed
+int ySpeed; // Player on-screen Y speed
+int sprite; //
+int tilemapX; // Current tilemap X position
+int tilemapY; // Current tilemap Y position
+int scrollX; // Current screen X scroll position
+int scrollY; // Current screen Y scroll position
 char knightFrame;
+char falling;
 
 void init(void)
 {
@@ -62,7 +48,6 @@ void updateVRAM(void)
 {
     static unsigned char frame = 0;
     static unsigned char rotate = 0;
-    unsigned char flicker;
 
     // Update VRAM in refresh
     __asm__("halt");
@@ -84,8 +69,7 @@ void updateVRAM(void)
     // Flicker lanterns
     if (timer & 1)
     {
-        flicker = (char) rand();
-        load_tiles(&tilesheet[12 + (flicker & 0x03) << 5], 3, 1, 4);
+        load_tiles(&tilesheet[12 + (rand() & 0x03) << 5], 3, 1, 4);
     }
 }
 
@@ -104,77 +88,83 @@ void main(void)
         // Read joypad
         dir = read_joypad1();
 
-        ySpeed = 0;
         xSpeed = 0;
+
+        doGravity();
 
         // Update sprite position
         if (dir & JOY_UP)
         {
             if (INT(y) > 16)
-                ySpeed = -Y_SPEED;
+                ySpeed = -Y_SPEED * 2;
         }
         else if (dir & JOY_DOWN)
         {
             if (INT(y) < (192 - 16))
                 ySpeed = Y_SPEED;
         }
-        else
-        {
-            // Clear any accumulated x-speed
-            y &= 0xfff0;
-        }
 
-        if (dir & JOY_LEFT)
+        if (!falling)
         {
-            if (INT(x) > 8 + 64)
+            if (dir & JOY_LEFT)
             {
-                xSpeed = -X_SPEED;
-            }
-            else
-            {
-                if (scrollRight() == FALSE)
+                if (INT(x) > 8 + 64)
                 {
-                    if (INT(x) > 8)
-                    {
-                        xSpeed = -X_SPEED;
-                    }
+                    xSpeed = -X_SPEED;
                 }
                 else
                 {
-                    if (knightFrame <= 0)
+                    if (scrollRight() == FALSE)
                     {
-                        knightFrame = FIX_POINT(5, 0);
+                        if (INT(x) > 8)
+                        {
+                            xSpeed = -X_SPEED;
+                        }
                     }
-                    knightFrame -= X_SPEED;
+                    else
+                    {
+                        if (knightFrame <= 0)
+                        {
+                            knightFrame = FIX_POINT(5, 0);
+                        }
+                        knightFrame -= X_SPEED;
+                    }
                 }
+                sprite = LEFT_SPRITE;
             }
-            sprite = LEFT_SPRITE;
-        }
-        else if (dir & JOY_RIGHT)
-        {
-            if (INT(x) < (256 - 16 - 64))
+            else if (dir & JOY_RIGHT)
             {
-                xSpeed = X_SPEED;
-            }
-            else
-            {
-                if (scrollLeft() == FALSE)
+                if (INT(x) < (256 - 16 - 64))
                 {
-                    if (INT(x) < (256 - 16))
-                    {
-                        xSpeed = X_SPEED;
-                    }
+                    xSpeed = X_SPEED;
                 }
                 else
                 {
-                    knightFrame += X_SPEED;
-                    if (knightFrame >= FIX_POINT(5, 0))
+                    if (scrollLeft() == FALSE)
                     {
-                        knightFrame = 0;
+                        if (INT(x) < (256 - 16))
+                        {
+                            xSpeed = X_SPEED;
+                        }
+                    }
+                    else
+                    {
+                        knightFrame += X_SPEED;
+                        if (knightFrame >= FIX_POINT(5, 0))
+                        {
+                            knightFrame = 0;
+                        }
                     }
                 }
+                sprite = RIGHT_SPRITE;
             }
-            sprite = RIGHT_SPRITE;
+            else
+            {
+                // Set sprite to standing
+                knightFrame = 0;
+                // Clear any accumulated x-speed
+                x &= 0xfff0;
+            }
         }
         else
         {
@@ -183,7 +173,6 @@ void main(void)
             // Clear any accumulated x-speed
             x &= 0xfff0;
         }
-
         x += xSpeed;
         y += ySpeed;
 
