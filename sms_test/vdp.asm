@@ -509,20 +509,13 @@ _setCRAMAddr:
         ;   N/A
         ;
 _fillScreen:
-        push    af
-        push    bc
-        di
-
         ; Reset the VRAM address
         xor     a
-        ld      b, a
         out     (VDP_Command), a
         ld      a, +(TILEMAP_BASE>>8)|VDP_VRAM_Access
         out     (VDP_Command), a
 
-        ; C - block count, where each block is 256 bytes
-        ; B - Byte count for each block 0 = 256 bytes
-        ld      c, 0x03
+        ld      bc, 0x380
 fsLoop:
         ld      a, l                    ; 4 Tile ID
         out     (VDP_Data), a
@@ -534,14 +527,12 @@ fsLoop:
 
         ld      a, h                    ; 4 Attribute
         out     (VDP_Data), a
-        djnz    fsLoop
 
-        dec     c
+        dec     bc
+        ld      a, b
+        or      c
         jr      nz, fsLoop
 
-        ei
-        pop     bc
-        pop     af
         ret
 
         ;

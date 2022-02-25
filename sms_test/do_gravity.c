@@ -3,12 +3,12 @@
 #include "vdp.h"
 
 extern int ySpeed;
+extern int xSpeed;
 extern int x;
 extern int y;
-extern int tilemapX;
-extern int tilemapY;
 extern char falling;
 extern int scrollX;
+extern char knightFrame;
 
 #define ID_SOFT_TILE    (10*16)
 
@@ -42,7 +42,14 @@ void doGravity(void)
     }
     else
     {
-        x &= 0xfff0;
+        // Set falling flag
         falling = TRUE;
+
+        // Set sprite to standing
+        knightFrame = 0;
+        // Clear any accumulated x-speed
+        x &= 0xfff0;
+        // Set speed to 0
+        xSpeed = 0;
     }
 }

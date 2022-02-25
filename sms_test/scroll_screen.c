@@ -2,8 +2,9 @@
 #include "vdp.h"
 #include "test.h"
 
-extern unsigned int scrollX;
-extern unsigned int tilemapY;
+extern int scrollX;
+extern int xSpeed;
+extern int tilemapY;
 
 char scrollLeft(void)
 {
@@ -28,7 +29,7 @@ char scrollLeft(void)
             }
             __asm__("ei");
         }
-        scrollX -= X_SPEED;
+        scrollX -= xSpeed;
         rv = TRUE;
     }
     return (rv);
@@ -57,7 +58,7 @@ char scrollRight(void)
             }
             __asm__("ei");
         }
-        scrollX += X_SPEED;
+        scrollX -= xSpeed;
         rv = TRUE;
     }
     return (rv);

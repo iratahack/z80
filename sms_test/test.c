@@ -88,8 +88,6 @@ void main(void)
         // Read joypad
         dir = read_joypad1();
 
-        xSpeed = 0;
-
         doGravity();
 
         // Update sprite position
@@ -98,65 +96,38 @@ void main(void)
             if (INT(y) > 16)
                 ySpeed = -Y_SPEED * 2;
         }
-        else if (dir & JOY_DOWN)
-        {
-            if (INT(y) < (192 - 16))
-                ySpeed = Y_SPEED;
-        }
 
         if (!falling)
         {
             if (dir & JOY_LEFT)
             {
-                if (INT(x) > 8 + 64)
-                {
-                    xSpeed = -X_SPEED;
-                }
-                else
-                {
-                    if (scrollRight() == FALSE)
-                    {
-                        if (INT(x) > 8)
-                        {
-                            xSpeed = -X_SPEED;
-                        }
-                    }
-                    else
-                    {
-                        if (knightFrame <= 0)
-                        {
-                            knightFrame = FIX_POINT(5, 0);
-                        }
-                        knightFrame -= X_SPEED;
-                    }
-                }
+                xSpeed = -X_SPEED;
                 sprite = LEFT_SPRITE;
+
+                if (xCollision() == FALSE)
+                {
+                    if (INT(x) > 8 + 64)
+                        x += xSpeed;
+                    else if (scrollRight() == FALSE)
+                    {
+                        x += xSpeed;
+                    }
+                }
             }
             else if (dir & JOY_RIGHT)
             {
-                if (INT(x) < (256 - 16 - 64))
-                {
-                    xSpeed = X_SPEED;
-                }
-                else
-                {
-                    if (scrollLeft() == FALSE)
-                    {
-                        if (INT(x) < (256 - 16))
-                        {
-                            xSpeed = X_SPEED;
-                        }
-                    }
-                    else
-                    {
-                        knightFrame += X_SPEED;
-                        if (knightFrame >= FIX_POINT(5, 0))
-                        {
-                            knightFrame = 0;
-                        }
-                    }
-                }
+                xSpeed = X_SPEED;
                 sprite = RIGHT_SPRITE;
+
+                if (xCollision() == FALSE)
+                {
+                    if (INT(x) < (256 - 16 - 64))
+                        x += xSpeed;
+                    else if (scrollLeft() == FALSE)
+                    {
+                        x += xSpeed;
+                    }
+                }
             }
             else
             {
@@ -164,27 +135,15 @@ void main(void)
                 knightFrame = 0;
                 // Clear any accumulated x-speed
                 x &= 0xfff0;
+                // Set speed to 0
+                xSpeed = 0;
             }
         }
-        else
-        {
-            // Set sprite to standing
-            knightFrame = 0;
-            // Clear any accumulated x-speed
-            x &= 0xfff0;
-        }
-        x += xSpeed;
+
         y += ySpeed;
 
-        if (xSpeed < 0) // Moving left
-        {
-            if (knightFrame <= 0)
-            {
-                knightFrame = FIX_POINT(5, 0);
-            }
-            knightFrame -= X_SPEED;
-        }
-        else if (xSpeed > 0) // Moving right
+        // Update the sprite animation if it is moving
+        if (xSpeed)
         {
             knightFrame += X_SPEED;
             if (knightFrame >= FIX_POINT(5, 0))
