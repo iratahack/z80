@@ -30,7 +30,7 @@
         extern  asm_load_palette
         extern  asm_load_tiles
 _isr:
-IF 0
+IF  0
         ; Disable screen
         ld      a, (_VDPReg1)
         and     0xbf

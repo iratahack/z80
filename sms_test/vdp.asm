@@ -49,8 +49,8 @@
 
 _scrollx:
         ld      a, l
-        out     (VDP_Command), a   ; Output value
-        ld      a, $80|$08      ; Output to VDP register 8 (X Scroll)
+        out     (VDP_Command), a        ; Output value
+        ld      a, $80|$08              ; Output to VDP register 8 (X Scroll)
         out     (VDP_Command), a
         ret
 
