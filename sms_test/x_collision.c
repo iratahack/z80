@@ -10,6 +10,16 @@ extern int y;
 extern int scrollX;
 extern char knightFrame;
 
+void stopXMovement(void)
+{
+    // Set sprite to standing
+    knightFrame = 0;
+    // Clear any accumulated x-speed
+    x &= 0xfff0;
+    // Set speed to 0
+    xSpeed = 0;
+}
+
 char xCollision(void)
 {
     unsigned int tileX;
@@ -32,13 +42,16 @@ char xCollision(void)
 
     if (levels[tileY][tileX] >= ID_SOLID_TILE)
     {
-        // Set sprite to standing
-        knightFrame = 0;
-        // Clear any accumulated x-speed
-        x &= 0xfff0;
-        // Set speed to 0
-        xSpeed = 0;
+        stopXMovement();
         return (TRUE);
+    }
+    else if ((INT(y) - 8) & 0x07)
+    {
+        if (levels[tileY + 1][tileX] >= ID_SOLID_TILE)
+        {
+            stopXMovement();
+            return (TRUE);
+        }
     }
     return (FALSE);
 }

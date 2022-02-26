@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.8" tiledversion="1.8.1" orientation="orthogonal" renderorder="left-down" compressionlevel="0" width="128" height="126" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#000000" nextlayerid="2" nextobjectid="1">
+<map version="1.8" tiledversion="1.8.2" orientation="orthogonal" renderorder="left-down" compressionlevel="0" width="128" height="126" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#000000" nextlayerid="2" nextobjectid="1">
  <editorsettings>
   <export target="levels.csv" format="csv"/>
  </editorsettings>

@@ -95,8 +95,7 @@ void main(void)
         // Read joypad
         dir = read_joypad1();
 
-        if (!jumping)
-            doGravity();
+        doGravity();
 
         // Update sprite position
         if (dir & JOY_UP)
@@ -110,15 +109,14 @@ void main(void)
             if (jumping)
             {
                 if (ySpeed < 0)
-                    // Reduce upward speed
-                    ySpeed += FIX_POINT(0, 4);
+                    ySpeed += FIX_POINT(0, 4);  // Reduce upward speed
                 else
-                    jumping = FALSE;
+                    jumping = FALSE;            // Stop jumping
             }
             else if (dir & JOY_FIREA)
             {
                 jumping = TRUE;
-                // Start jump speed
+                // Starting jump speed
                 ySpeed = -FIX_POINT(3, 0);
             }
 
