@@ -45,7 +45,7 @@ void doGravity(void)
 
     tileX = (INT(x) + INT(scrollX * -1) - 4) >> 3;
 
-    if (ySpeed < 0)
+    if (ySpeed < 0)     // Moving up
     {
         tileY = (INT(y + ySpeed) - 16) >> 3;
 
@@ -67,9 +67,7 @@ void doGravity(void)
     }
     else
     {
-        ySpeed = Y_SPEED;
-
-        // TODO: Check for collisions when moving up.
+        ySpeed = Y_SPEED;   // Gravity
 
         // Convert player relative screen position to
         // absolute level map. Screen is offset by 8
@@ -77,7 +75,6 @@ void doGravity(void)
         // 4 pixels from the edge of the tile so add
         // that. The result is we subtract 4, which
         // can be seen below.
-//        tileX = (INT(x) + INT(scrollX * -1) - 4) >> 3;
         tileY = INT(y) >> 3;
 
 #ifdef DEBUG
@@ -113,4 +110,7 @@ void doGravity(void)
             setFalling();
         }
     }
+
+    y += ySpeed;
+
 }
