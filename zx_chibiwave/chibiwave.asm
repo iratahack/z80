@@ -6,7 +6,7 @@ _main:
                                         ; Length
         ld      hl, evillaugh
         ld      a, 2                    ; 0/1/2 = 1/2/4 bits per sample
-        ld      b, 30                   ; delay
+        ld      b, 70                   ; delay
         call    ChibiWave
         ret
 
@@ -120,5 +120,5 @@ AYRegWriteQuick:
         ret
 
 evillaugh:
-        binary  "evillaugh4-3.raw"
+        binary  "evillaugh4-8.raw"
 evillaughend:
