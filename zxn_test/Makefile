@@ -9,7 +9,9 @@ LD=z88dk-z80asm
 
 PROJECT_NAME=sprite
 ASMSRC=sprite.asm tiles.asm levels.asm knight.asm
+EMUFLAGS= --machine TBBlue --configfile .zesaruxrc --tbblue-fast-boot-mode  --nosplash --nowelcomemessage --quickexit
 ZXSTLC=./tools/zxstlc$(SUFFIX)
+
 
 LDFLAGS=-mz80n -m -b
 ASFLAGS=-mz80n
@@ -29,7 +31,7 @@ clean:
 	rm -f *.[oid] *.tap *.bin *.map *.dsk
 
 run: $(PROJECT_NAME).tap
-	zesarux $<
+	zesarux $(EMUFLAGS) $<
 
 rundsk: $(PROJECT_NAME).dsk
 	fuse $<
