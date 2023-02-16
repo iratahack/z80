@@ -1,3 +1,9 @@
+ifeq ($(OS),Windows_NT)
+SUFFIX=.exe
+else
+SUFFIX=
+endif
+
 PROJ:=test
 
 CC:=zcc
@@ -35,23 +41,39 @@ dis: all
 	@echo "Compiling $<"
 	@$(CC) $(TARGET) $(CFLAGS) -c $<
 
-SMS_Sprites.nxt: SMS_Sprites.png Gfx2Next/bin/gfx2next
-	./Gfx2Next/bin/gfx2next -map-none -tile-y -pal-bgr222 -tile-planar4 $<
+ifeq (,$(findstring $(MAKECMDGOALS),clean))
+%.d: %.asm
+	@./mkdep.sh $< > $@
+endif
 
-tilesheet.nxt: tilesheet.png Gfx2Next/bin/gfx2next
-	./Gfx2Next/bin/gfx2next -map-none -pal-bgr222 -tile-planar4 $<
+SMS_Sprites.nxt: SMS_Sprites.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -map-none -tile-y -pal-none -tile-planar4 $<
 
-title2.nxt: title2.png Gfx2Next/bin/gfx2next
-	./Gfx2Next/bin/gfx2next -map-sms -pal-bgr222 -tile-nomirror -tile-planar4 $<
+SMS_Sprites.nxp: SMS_Sprites.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -tile-none -map-none -tile-y -pal-bgr222 $<
 
-levels.nxm: levels.tmx Gfx2Next/bin/gfx2next
+tilesheet.nxt: tilesheet.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -map-none -pal-none -tile-planar4 $<
+
+tilesheet.nxp: tilesheet.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -tile-none -map-none -pal-bgr222 $<
+
+title2.nxt: title2.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -map-sms -pal-none -tile-nomirror -tile-planar4 $<
+
+title2.nxp: title2.png Gfx2Next/bin/gfx2next$(SUFFIX)
+	./Gfx2Next/bin/gfx2next -map-none -tile-none -pal-bgr222 $<
+
+levels.nxm: levels.tmx Gfx2Next/bin/gfx2next$(SUFFIX)
 	./Gfx2Next/bin/gfx2next -tiled -pal-none -tile-none -tiled-blank=11 $<
+
+Gfx2Next/bin/gfx2next$(SUFFIX): Gfx2Next
+	make -C Gfx2Next CC=clang
 
 Gfx2Next:
 	git clone --depth=1 https://github.com/headkaze/Gfx2Next.git
 
-Gfx2Next/bin/gfx2next: Gfx2Next
-	make -C Gfx2Next
-
 clean:
-	rm -f *.o *.map *.bin *.sms *.nxp *.nxt *.nxm
+	rm -f *.[od] *.map *.bin *.sms *.nxp *.nxt *.nxm
+
+-include $(ASMSRC:.asm=.d)
