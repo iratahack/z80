@@ -1,5 +1,22 @@
         public  _main
 
+  IF    _SMS
+        defc    keyPort=$dc
+        defc    PSGDataPort=$7f
+        defc    PSGLatch=$80
+        defc    PSGData=$40
+        defc    PSGChannel0=%00000000
+        defc    PSGChannel1=%00100000
+        defc    PSGChannel2=%01000000
+        defc    PSGChannel3=%01100000
+        defc    PSGVolumeData=%00010000
+  ELSE
+        defc    keyPort=$fe
+        defc    PSGDataPort=$fe
+  ENDIF
+
+        section code_user
+
 _main:
         ld      hl, musicData
         call    play
@@ -22,11 +39,29 @@ OP_XORH equ     $ac
 OP_ORC  equ     $b1
 OP_ORH  equ     $b4
 
-
+        section data_user
 
 play:
 
         di
+  IF    _SMS
+        ld      a, PSGLatch|PSGChannel0|PSGVolumeData|$0f
+                                        ; latch channel 0, volume=0xF (silent)
+        out     (PSGDataPort), a
+        add     $20                     ; PSG channel 1
+        out     (PSGDataPort), a
+        add     $20                     ; PSG channel 2
+        out     (PSGDataPort), a
+        add     $20                     ; PSG noise channel
+        out     (PSGDataPort), a
+
+        ld      a, PSGLatch|PSGChannel0|$01
+                                        ; latch channel 0, tone lower bits = 1
+        out     (PSGDataPort), a
+        xor     a                       ; tone upper bits = 0
+        out     (PSGDataPort), a
+  ENDIF
+
         exx
         push    iy
         push    hl
@@ -78,7 +113,7 @@ play:
 
 readRow:
 
-        readRow_pos =$+1
+readRow_pos equ $+1
         ld      hl, 0
 
 read:
@@ -110,7 +145,7 @@ setLoop:
 
 readLoop:
 
-        readRow_loop    =$+1
+readRow_loop    equ $+1
         ld      hl, 0
         jp      read
 
@@ -145,7 +180,7 @@ ch0:
         ld      l, a
         add     hl, hl
         add     hl, hl
-        readRow_insList0    =$+1
+readRow_insList0    equ $+1
         ld      bc, 0
         add     hl, bc
 
@@ -176,19 +211,19 @@ ch0:
         ld      b, 18                   ;out mask - new test
         ld      a, c
         and     b
-        ld      (soundLoop_volA0), a
+;        ld      (soundLoop_volA0), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volA1), a
+;        ld      (soundLoop_volA1), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volA2), a
+;        ld      (soundLoop_volA2), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volA3), a
+;        ld      (soundLoop_volA3), a
 
         ld      a, (hl)                 ;phase slide speed
         inc     hl
@@ -262,11 +297,11 @@ note0:
         ex      de, hl
         ld      l, a
 
-        phasereset0 =$+1
+phasereset0 equ $+1
         jr      $+2                     ;$+2 to reset, $+12 to skip
 
         ld      ix, (soundInit_ch0cnt0)
-        readRow_ch0pha  =$+1
+readRow_ch0pha  equ $+1
         ld      a, 0
         add     a, ixh
         ld      ixh, a
@@ -278,14 +313,14 @@ ch0phaseresetskip:
         inc     l
         ld      b, (hl)
         ld      (soundInit_ch0add0), bc
-        readRow_ch0int  =$+1
+readRow_ch0int  equ $+1
         ld      a, 0
         add     a, l
         ld      l, a
         ld      b, (hl)
         dec     l
         ld      c, (hl)
-        readRow_ch0det  =$+1
+readRow_ch0det  equ $+1
         ld      hl, 0
         add     hl, bc
         ld      sp, hl                  ;ch0add1
@@ -304,7 +339,7 @@ ch1:
         ld      l, a
         add     hl, hl
         add     hl, hl
-        readRow_insList1    =$+1
+readRow_insList1    equ $+1
         ld      bc, 0
         add     hl, bc
 
@@ -335,19 +370,19 @@ ch1:
         ld      b, 18                   ;out mask - new test
         ld      a, c
         and     b
-        ld      (soundLoop_volB0), a
+;        ld      (soundLoop_volB0), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volB1), a
+;        ld      (soundLoop_volB1), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volB2), a
+;        ld      (soundLoop_volB2), a
         rr      c
         ld      a, c
         and     b
-        ld      (soundLoop_volB3), a
+;        ld      (soundLoop_volB3), a
 
         ld      a, (hl)                 ;phase slide speed
         inc     hl
@@ -421,11 +456,11 @@ note1:
         ex      de, hl
         ld      l, a
 
-        phasereset1 =$+1
+phasereset1 equ $+1
         jr      $+2                     ;$+2 to reset, $+12 to skip
 
         ld      iy, (readRow_ch1cnt0)
-        readRow_ch1pha  =$+1
+readRow_ch1pha  equ $+1
         ld      a, 0
         add     a, iyh
         ld      iyh, a
@@ -437,24 +472,24 @@ ch1phaseresetskip:
         inc     l
         ld      b, (hl)
         ld      (readRow_ch1add0), bc
-        readRow_ch1int  =$+1
+readRow_ch1int  equ $+1
         ld      a, 0
         add     a, l
         ld      l, a
         ld      b, (hl)
         dec     l
         ld      c, (hl)
-        readRow_ch1det  =$+1
+readRow_ch1det  equ $+1
         ld      hl, 0
         add     hl, bc
         ld      (readRow_ch1add1), hl
         ex      de, hl
         exx
-        readRow_ch1cnt0 =$+1
+readRow_ch1cnt0 equ $+1
         ld      hl, 0
-        readRow_ch1add1 =$+1
+readRow_ch1add1 equ $+1
         ld      de, 0
-        readRow_ch1add0 =$+1
+readRow_ch1add0 equ $+1
         ld      bc, 0
         exx
 
@@ -463,14 +498,14 @@ ch1skip:
         ld      (readRow_pos), hl
 
         xor     a
-        in      a, ($fe)
+        in      a, (keyPort)
         or      $e0
         inc     a
         jp      z, soundInit
 
 stopPlayer:
 
-        stopPlayer_oldSP    =$+1
+stopPlayer_oldSP    equ $+1
         ld      sp, 0
         pop     hl
         exx
@@ -482,9 +517,9 @@ stopPlayer:
 
 soundInit:
 
-        soundInit_skip  =$+1
+soundInit_skip  equ $+1
         ld      d, 0                    ;drum length to compensate
-        soundInit_len   =$+1
+soundInit_len   equ $+1
         ld      a, 100                  ;speed
         sub     d
         jp      nc, $+5
@@ -496,9 +531,9 @@ soundInit:
         xor     a
         ld      (soundInit_skip), a
 
-        soundInit_ch0cnt0   =$+1
+soundInit_ch0cnt0   equ $+1
         ld      hl, 0
-        soundInit_ch0add0   =$+1
+soundInit_ch0add0   equ $+1
         ld      bc, 200
 
 soundLoopH:
@@ -510,24 +545,36 @@ soundLoop:
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     ix, sp                  ;15
-        soundLoop_opA0  =$+1
+soundLoop_opA0  equ $+1
         xor     ixh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volA0 =$+1
+soundLoop_volA0 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     iy, de                  ;15
-        soundLoop_opB0  =$+1
+soundLoop_opB0  equ $+1
         xor     iyh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volB0 =$+1
+soundLoop_volB0 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
 
         nop                             ;4
@@ -536,24 +583,36 @@ soundLoop:
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     ix, sp                  ;15
-        soundLoop_opA1  =$+1
+soundLoop_opA1  equ $+1
         xor     ixh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volA1 =$+1
+soundLoop_volA1 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     iy, de                  ;15
-        soundLoop_opB1  =$+1
+soundLoop_opB1  equ $+1
         xor     iyh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volB1 =$+1
+soundLoop_volB1 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
 
         nop                             ;4
@@ -562,24 +621,36 @@ soundLoop:
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     ix, sp                  ;15
-        soundLoop_opA2  =$+1
+soundLoop_opA2  equ $+1
         xor     ixh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volA2 =$+1
+soundLoop_volA2 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     iy, de                  ;15
-        soundLoop_opB2  =$+1
+soundLoop_opB2  equ $+1
         xor     iyh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volB2 =$+1
+soundLoop_volB2 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
 
         nop                             ;4
@@ -588,37 +659,49 @@ soundLoop:
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     ix, sp                  ;15
-        soundLoop_opA3  =$+1
+soundLoop_opA3  equ $+1
         xor     ixh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volA3 =$+1
+soundLoop_volA3 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
         add     hl, bc                  ;11
         ld      a, h                    ;4
         add     iy, de                  ;15
-        soundLoop_opB3  =$+1
+soundLoop_opB3  equ $+1
         xor     iyh                     ;8
         rla                             ;4
         sbc     a, a                    ;4
-        soundLoop_volB3 =$+1
+soundLoop_volB3 equ $+1
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
         and     16                      ;7
-        out     ($fe), a                ;11
+  ENDIF
+        out     (PSGDataPort), a        ;11
         exx                             ;4
 
         dec     e                       ;4
-        jr      nz, soundLoop           ;12=152
+        jp      nz, soundLoop           ;12=152
 
-        soundLoop_phaseSlideEnableA =$+1
+soundLoop_phaseSlideEnableA equ $+1
         jr      $+2
 
 soundLoop_phaseSlideA0:
-        soundLoop_phaseSlideDivA    =$+1
+soundLoop_phaseSlideDivA    equ $+1
         ld      a, 0
         inc     a
-        soundLoop_phaseSlideSpeedA  =$+1
+soundLoop_phaseSlideSpeedA  equ $+1
         cp      1
         jr      c, $+3
         xor     a
@@ -633,14 +716,14 @@ soundLoop_phaseSlideA0:
         ld      l, a
 soundLoop_phaseSlideA1:
 
-        soundLoop_phaseSlideEnableB =$+1
+soundLoop_phaseSlideEnableB equ $+1
         jr      $+2
 
 soundLoop_phaseSlideB0:
-        soundLoop_phaseSlideDivB    =$+1
+soundLoop_phaseSlideDivB    equ $+1
         ld      a, 0
         inc     a
-        soundLoop_phaseSlideSpeedB  =$+1
+soundLoop_phaseSlideSpeedB  equ $+1
         cp      1
         jr      c, $+3
         xor     a
@@ -658,13 +741,13 @@ phaseSlideB1:
         exx
 soundLoop_phaseSlideB2:
 
-        soundLoop_cntA0Slide    =$
+soundLoop_cntA0Slide    equ $
         nop                             ;bc
         nop
         nop
         nop
 
-        soundLoop_cntA1Slide    =$
+soundLoop_cntA1Slide    equ $
         nop                             ;sp
         nop
         nop
@@ -672,13 +755,13 @@ soundLoop_phaseSlideB2:
 
         exx
 
-        soundLoop_cntB0Slide    =$
+soundLoop_cntB0Slide    equ $
         nop                             ;bc
         nop
         nop
         nop
 
-        soundLoop_cntB1Slide    =$
+soundLoop_cntB1Slide    equ $
         nop                             ;de
         nop
         nop
@@ -701,7 +784,7 @@ playDrumSample:
         ld      h, 0
         add     hl, hl
         add     hl, hl
-        playDrumSample_drumList =$+1
+playDrumSample_drumList equ $+1
         ld      bc, 0
         add     hl, bc
 
@@ -721,12 +804,18 @@ playDrumSample:
         ld      c, 0
 loop0:
         ld      a, (hl)                 ;7
-        mask    =$+1
+mask    equ     $+1
         and     0                       ;7
         sub     1                       ;7
         sbc     a, a                    ;4
-        and     18                      ;7 (out mask) - drums
-        out     ($fe), a                ;11
+  IF    _SMS
+        and     $0f
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
+  ELSE
+        and     16                      ;7 (out mask) - drums
+  ENDIF
+        out     (PSGDataPort), a        ;11
         ld      a, (mask)               ;13
         rlc     a                       ;8
         ld      (mask), a               ;13
@@ -750,8 +839,9 @@ loop0:
 
         jp      readRow
 
-;	align 256
-        ds      69
+
+        section rodata_user
+        align   256
 
 noteTable:
 
@@ -767,10 +857,7 @@ noteTable:
         dw      $30fc, $33e6, $36fc, $3a41, $3db8, $4164, $4547, $4966, $4dc3, $5263, $5748, $5c79
         dw      $61f9, $67cc, $6df8, $7483, $7b71, $82c8, $8a8f, $92cc, $9b86, $a4c6, $ae91, $b8f3
 
-        ds      12
-
-; align 256
-
+        align   256
 musicData:
         dw      sequence
         dw      insList
