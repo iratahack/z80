@@ -221,7 +221,17 @@ readRow_insList0    equ $+1
         ld      (soundLoop_opA3), a
 
   IF    _SMS
+        ld      a, (hl)                 ;volume
         inc     hl
+        rrca
+        rrca
+        rrca
+        rrca
+        and     $0f
+        ld      (soundLoop_volA0), a
+        ld      (soundLoop_volA1), a
+        ld      (soundLoop_volA2), a
+        ld      (soundLoop_volA3), a
   ELSE
         ld      c, (hl)                 ;volume
         inc     hl
@@ -384,7 +394,17 @@ readRow_insList1    equ $+1
         ld      (soundLoop_opB3), a
 
   IF    _SMS
+        ld      a, (hl)                 ;volume
         inc     hl
+        rrca
+        rrca
+        rrca
+        rrca
+        and     $0f
+        ld      (soundLoop_volB0), a
+        ld      (soundLoop_volB1), a
+        ld      (soundLoop_volB2), a
+        ld      (soundLoop_volB3), a
   ELSE
         ld      c, (hl)                 ;volume
         inc     hl
