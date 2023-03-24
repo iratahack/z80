@@ -10,6 +10,7 @@
         defc    PSGChannel2=%01000000
         defc    PSGChannel3=%01100000
         defc    PSGVolumeData=%00010000
+        defc    PSG_VOL=$0f
   ELSE
         defc    keyPort=$fe
         defc    PSGDataPort=$fe
@@ -45,21 +46,34 @@ play:
 
         di
   IF    _SMS
+        ld      bc, PSGDataPort
+        ; Silence all channels
+        ; latch channel 0, volume=0xF (silent)
         ld      a, PSGLatch|PSGChannel0|PSGVolumeData|$0f
-                                        ; latch channel 0, volume=0xF (silent)
-        out     (PSGDataPort), a
-        add     $20                     ; PSG channel 1
-        out     (PSGDataPort), a
-        add     $20                     ; PSG channel 2
-        out     (PSGDataPort), a
-        add     $20                     ; PSG noise channel
-        out     (PSGDataPort), a
+        out     (c), a
+        ld      a, PSGLatch|PSGChannel1|PSGVolumeData|$0f
+        out     (c), a
+        ld      a, PSGLatch|PSGChannel2|PSGVolumeData|$0f
+        out     (c), a
+        ld      a, PSGLatch|PSGChannel3|PSGVolumeData|$0f
+        out     (c), a
 
+        ; Set tone value for tone channels
         ld      a, PSGLatch|PSGChannel0|$01
-                                        ; latch channel 0, tone lower bits = 1
-        out     (PSGDataPort), a
-        xor     a                       ; tone upper bits = 0
-        out     (PSGDataPort), a
+        out     (c), a
+        out     (c), b
+
+        ld      a, PSGLatch|PSGChannel1|$01
+        out     (c), a
+        out     (c), b
+
+        ld      a, PSGLatch|PSGChannel2|$01
+        out     (c), a
+        out     (c), b
+
+        ld      a, PSGLatch|PSGChannel3|$01
+        out     (c), a
+        out     (c), b
   ENDIF
 
         exx
@@ -206,24 +220,28 @@ readRow_insList0    equ $+1
         ld      (soundLoop_opA2), a
         ld      (soundLoop_opA3), a
 
+  IF    _SMS
+        inc     hl
+  ELSE
         ld      c, (hl)                 ;volume
         inc     hl
         ld      b, 18                   ;out mask - new test
         ld      a, c
         and     b
-;        ld      (soundLoop_volA0), a
+        ld      (soundLoop_volA0), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volA1), a
+        ld      (soundLoop_volA1), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volA2), a
+        ld      (soundLoop_volA2), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volA3), a
+        ld      (soundLoop_volA3), a
+  ENDIF
 
         ld      a, (hl)                 ;phase slide speed
         inc     hl
@@ -365,24 +383,28 @@ readRow_insList1    equ $+1
         ld      (soundLoop_opB2), a
         ld      (soundLoop_opB3), a
 
+  IF    _SMS
+        inc     hl
+  ELSE
         ld      c, (hl)                 ;volume
         inc     hl
         ld      b, 18                   ;out mask - new test
         ld      a, c
         and     b
-;        ld      (soundLoop_volB0), a
+        ld      (soundLoop_volB0), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volB1), a
+        ld      (soundLoop_volB1), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volB2), a
+        ld      (soundLoop_volB2), a
         rr      c
         ld      a, c
         and     b
-;        ld      (soundLoop_volB3), a
+        ld      (soundLoop_volB3), a
+  ENDIF
 
         ld      a, (hl)                 ;phase slide speed
         inc     hl
@@ -551,9 +573,8 @@ soundLoop_opA0  equ $+1
         sbc     a, a                    ;4
 soundLoop_volA0 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
@@ -568,17 +589,18 @@ soundLoop_opB0  equ $+1
         sbc     a, a                    ;4
 soundLoop_volB0 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel2|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
         out     (PSGDataPort), a        ;11
         exx                             ;4
 
+  IF    !_SMS
         nop                             ;4
         jr      $+2                     ;12=152
+  ENDIF
 
         add     hl, bc                  ;11
         ld      a, h                    ;4
@@ -589,9 +611,8 @@ soundLoop_opA1  equ $+1
         sbc     a, a                    ;4
 soundLoop_volA1 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
@@ -606,17 +627,18 @@ soundLoop_opB1  equ $+1
         sbc     a, a                    ;4
 soundLoop_volB1 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel2|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
         out     (PSGDataPort), a        ;11
         exx                             ;4
 
+  IF    !_SMS
         nop                             ;4
         jr      $+2                     ;12=152
+  ENDIF
 
         add     hl, bc                  ;11
         ld      a, h                    ;4
@@ -627,9 +649,8 @@ soundLoop_opA2  equ $+1
         sbc     a, a                    ;4
 soundLoop_volA2 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
@@ -644,17 +665,18 @@ soundLoop_opB2  equ $+1
         sbc     a, a                    ;4
 soundLoop_volB2 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel2|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
         out     (PSGDataPort), a        ;11
         exx                             ;4
 
+  IF    !_SMS
         nop                             ;4
         jr      $+2                     ;12=152
+  ENDIF
 
         add     hl, bc                  ;11
         ld      a, h                    ;4
@@ -665,9 +687,8 @@ soundLoop_opA3  equ $+1
         sbc     a, a                    ;4
 soundLoop_volA3 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
@@ -682,9 +703,8 @@ soundLoop_opB3  equ $+1
         sbc     a, a                    ;4
 soundLoop_volB3 equ $+1
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel2|PSGVolumeData ;7
   ELSE
         and     16                      ;7
   ENDIF
@@ -809,9 +829,8 @@ mask    equ     $+1
         sub     1                       ;7
         sbc     a, a                    ;4
   IF    _SMS
-        and     $0f
-        or      PSGLatch|PSGChannel0|PSGVolumeData
-                                        ;7
+        and     PSG_VOL                 ;7
+        or      PSGLatch|PSGChannel1|PSGVolumeData ;7
   ELSE
         and     16                      ;7 (out mask) - drums
   ENDIF
@@ -828,8 +847,12 @@ mask    equ     $+1
         inc     hl                      ;6
         dec     hl                      ;6
         inc     hl                      ;6
+        ; Remove 12 cycles for SMS to compensate for
+        ; 14 cycles added above by XOR & OR
+  IF    !_SMS
         dec     hl                      ;6
         inc     hl                      ;6
+  ENDIF
         ld      a, 0                    ;7
 
         dec     c                       ;4
