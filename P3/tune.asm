@@ -604,7 +604,7 @@ onA0:
         sbc     a, a                    ;4
         and     16                      ;7
   ENDIF
-;        out     (PSGDataPort), a        ;11
+        out     (PSGDataPort), a        ;11
         exx                             ;4
         add     hl, bc                  ;11
         ld      a, h                    ;4
@@ -825,7 +825,7 @@ mask    equ     $+1
   IF    _SMS
         xor     $ff                     ;7
         and     PSG_VOL                 ;7
-        or      PSGLatch|PSGChannel2|PSGVolumeData ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
   ELSE
         and     16                      ;7 (out mask) - drums
   ENDIF
