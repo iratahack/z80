@@ -579,10 +579,10 @@ soundInit_ch0add0   equ $+1
 soundLoopH:
 
   IF    _SMS
-        ;202 loops @ 192 cycles = ~90 hz based on 3.5MHz CPU clock
-        ld      e,202
+        ;204 loops @ 190 cycles = ~90 hz based on 3.5MHz CPU clock
+        ld      e, 204
   ELSE
-        ld      e,64
+        ld      e, 64
   ENDIF
 
 soundLoop:
@@ -593,15 +593,17 @@ soundLoop:
 soundLoop_opA0  equ $+1
         xor     ixh                     ;8
         rla                             ;4
-soundLoop_volA0 equ $+1
   IF    _SMS
+soundLoop_volA0 equ $+1
         ld      a, -1                   ;7
-        jp      c, onA0                ;10
+        jp      c, onA0                 ;10
         ld      a, $0f                  ;7
 onA0:
-        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
   ELSE
         sbc     a, a                    ;4
+soundLoop_volA0 equ $+1
         and     16                      ;7
   ENDIF
         out     (PSGDataPort), a        ;11
@@ -612,15 +614,17 @@ onA0:
 soundLoop_opB0  equ $+1
         xor     iyh                     ;8
         rla                             ;4
-soundLoop_volB0 equ $+1
   IF    _SMS
+soundLoop_volB0 equ $+1
         ld      a, -1                   ;7
-        jp      c, onB0                ;10
+        jp      c, onB0                 ;10
         ld      a, $0f                  ;7
 onB0:
-        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
   ELSE
         sbc     a, a                    ;4
+soundLoop_volB0 equ $+1
         and     16                      ;7
   ENDIF
         out     (PSGDataPort), a        ;11
@@ -825,7 +829,8 @@ mask    equ     $+1
   IF    _SMS
         xor     $ff                     ;7
         and     PSG_VOL                 ;7
-        or      PSGLatch|PSGChannel0|PSGVolumeData ;7
+        or      PSGLatch|PSGChannel0|PSGVolumeData
+                                        ;7
   ELSE
         and     16                      ;7 (out mask) - drums
   ENDIF
