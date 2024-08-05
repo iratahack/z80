@@ -1,4 +1,4 @@
-APPS:=cpc_sprite  cpc_test  gb_test  msx_test  sms_test  zxn_test zx_chibiwave
+APPS:=cpc_sprite  cpc_test  gb_test  msx_test  sms_test  zxn_test zx_chibiwave aquarius
 
 .PHONY: $(APPS) all run clean
 
