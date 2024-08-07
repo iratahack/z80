@@ -11,6 +11,16 @@ VCTRL			equ $e0
         org     $38E1
         binary  "loader.bas"
 
+	; Set the border color
+	xor	a
+	out	(VPALSEL), a
+	out	(VPALDATA), a		; G/B
+	inc	a
+	out	(VPALSEL), a
+	xor	a
+	out	(VPALDATA), a		; R
+
+
 	ld	a, 20
 	out	(bank_1), a
 
@@ -23,7 +33,7 @@ VCTRL			equ $e0
 
 	ld	hl, load_addr+(40*200)
 	ld	b, 32
-	ld	a, 32
+	ld	a, b
 setPal:
 	out	(VPALSEL), a
 	inc	a
