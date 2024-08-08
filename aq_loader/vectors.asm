@@ -2,7 +2,7 @@ IRQMASK equ     $ee
 IRQSTAT equ     $ef
 VIRQLINE    equ $ed
 
-        section BANK_0
+        section VECTORS
 rst0:
         di
         jp      start
@@ -32,6 +32,7 @@ rst38:
         ei
         ret
 
+        section CODE_0
 initISR:
         di
         ; Enable VBlank interrupt

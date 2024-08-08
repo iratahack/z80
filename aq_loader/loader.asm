@@ -15,6 +15,9 @@ IO_VCTRL    equ $e0
 basicLoader:
         binary  "loader.bas"
 init:
+        di
+        ld      sp, loaderEnd           ; New stack
+
 	; Set the border color
         xor     a
         out     (IO_VPALSEL), a
@@ -26,28 +29,28 @@ init:
 
         call    displayLoadingScreen
 
-        ; Load page for bank 0
+        call    clearMemory
+
+        ; Copy loader to page 40 which
+        ; will be mapped in at bank 0
         ld      a, 40
         out     (IO_BANK1), a
-        ; Clear it
-        ld      hl, __BANK_1_head
-        ld      de, __BANK_1_head+1
-        ld      (hl), 0
-        ld      bc, $3fff
-        ldir
-
-        ; Copy loader
         ld      hl, init
         ld      de, init+__BANK_1_head
         ld      bc, loaderEnd-init
         ldir
 
+        ; Load the banks
         ld      de, bank0_filename      ; DE = Filename address
-        call    str_tempdesc            ; Build string descriptor for save
-        ld      de, __BANK_1_head       ; DE = Data start address
-        ld      bc, $3800               ; BC = Max data length
-        ld      iy, file_load_binary    ; Call load routine
-        call    aux_call                ; in auxillary ROM
+        call    loadBank
+
+        ; Update filename for next bank
+;        ld      hl, bank
+;        inc     (hl)
+;        ld      a, <bank #>
+;        out     (IO_BANK1), a
+;        ld      de, bank0_filename      ; DE = Filename address
+;        call    loadBank
 initMemmap:
         ld      a, 40
         out     (IO_BANK0), a
@@ -59,16 +62,43 @@ initMemmap:
         out     (IO_BANK3), a
 
         rst     0                       ; Hit the reset vector
-displayLoadingScreen:
-        ld      a, 20                   ; VRAM
-        out     (IO_BANK1), a
 
-        ld      de, filename            ; DE = Filename address
+loadBank:
         call    str_tempdesc            ; Build string descriptor for save
         ld      de, __BANK_1_head       ; DE = Data start address
         ld      bc, $4000               ; BC = Max data length
         ld      iy, file_load_binary    ; Call load routine
         call    aux_call                ; in auxillary ROM
+        ret
+
+clearMemory:
+        in      a, (IO_BANK1)
+        push    af
+
+        ld      a, 40
+clearNextBank:
+        out     (IO_BANK1), a
+        ; Clear it
+        ld      hl, __BANK_1_head
+        ld      de, __BANK_1_head+1
+        ld      (hl), 0
+        ld      bc, $3fff
+        ldir
+
+        inc     a
+        cp      44
+        jr      nz, clearNextBank
+
+        pop     af
+        out     (IO_BANK1), a
+        ret
+
+displayLoadingScreen:
+        ld      a, 20                   ; VRAM
+        out     (IO_BANK1), a
+
+        ld      de, filename            ; DE = Filename address
+        call    loadBank
 
         ld      hl, __BANK_1_head+(40*200)
         ld      b, 32
@@ -92,5 +122,10 @@ setPal:
 filename:
         db      "loading_screen.scr", 0
 bank0_filename:
-        db      "loader_BANK_0.bin", 0
+        db      "loader_BANK_"
+bank:
+        db      "0"
+        db      ".bin", 0
+
+        ds      $20, $aa                ; Stack
 loaderEnd:
