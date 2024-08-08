@@ -46,7 +46,9 @@ initISR:
         ei
         ret
 
+        extern  _titleMusic
 start:
         call    initISR
+        call    _titleMusic
         jr      $
 
