@@ -11,9 +11,8 @@
 
   IFDEF AQ_PLUS
         defc    keyPort=$ff
-        defc    PSGDataPort=$f6
-        defc    PSGAddrPort=$f7
-        defc    VOLUME_ENABLE=$0f
+        defc    PSGDataPort=$ec
+        defc    VOLUME_ENABLE=$80
   ELSE
         defc    keyPort=$fe
         defc    PSGDataPort=$fe
@@ -65,22 +64,6 @@ PLAYER:
         DI
         PUSH    IY
   IFDEF AQ_PLUS
-        XOR     A
-        LD      B, A
-        LD      HL, PSG_REG_SEC
-        LD      DE, (PSGAddrPort<<8)|PSGDataPort
-LOUT:
-        LD      C, D
-        OUT     (C), A
-        LD      C, E
-        OUTI
-        INC     A
-        CP      $11
-        JR      NZ, LOUT
-
-        ; Select Volume for channel A
-        ld      a, 8
-        out     (PSGAddrPort), a
         xor     a
   ELSE
         LD      A, BORDER_COL
@@ -183,7 +166,7 @@ L809B:  LD      E, (IX+$01)
 
         LD      HL, OUT_1               ; Reset phaser
   IFDEF AQ_PLUS
-        ld      (hl), $00
+        RES     7, (HL)
   ELSE
         RES     4, (HL)
   ENDIF
@@ -198,7 +181,7 @@ SET_NOTE2:
         LD      A, IYH
         LD      HL, OUT_2
   IFDEF AQ_PLUS
-        ld      (hl), $00
+        RES     7, (HL)
   ELSE
         RES     4, (HL)
   ENDIF
@@ -216,7 +199,7 @@ SET_STOP:
         LD      (DIV_1B), HL
         LD      HL, OUT_1
   IFDEF AQ_PLUS
-        ld      (hl), $00
+        RES     7, (HL)
   ELSE
         RES     4, (HL)
   ENDIF
@@ -227,7 +210,7 @@ SET_STOP2:
         LD      (DIV_2), HL
         LD      HL, OUT_2
   IFDEF AQ_PLUS
-        ld      (hl), $00
+        RES     7, (HL)
   ELSE
         RES     4, (HL)
   ENDIF
@@ -260,11 +243,10 @@ SKIP_CH1:
 EXIT_PLAYER:
   IFDEF AQ_PLUS
         xor     a
-        out     (PSGDataPort), a
   ELSE
         LD      A, MIC_OUTPUT|BORDER_COL
-        OUT     (PSGDataPort), A
   ENDIF
+        OUT     (PSGDataPort), A
         EXX
         POP     IY
         EI
@@ -482,11 +464,7 @@ DRUM_SAMPLE:
         JR      NZ, L8247               ; Sample bit set
         JR      Z, L8249                ; Sample bit not set
 L8247:
-  IFDEF AQ_PLUS
         OR      VOLUME_ENABLE
-  ELSE
-        OR      VOLUME_ENABLE
-  ENDIF
 L8249:
         out     (PSGDataPort), a
         LD      E, $04
