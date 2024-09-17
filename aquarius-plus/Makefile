@@ -5,7 +5,7 @@ PROJ=main
 all: $(PROJ).bas $(PROJ).bin
 
 %.bin: %.c
-	zcc +aquarius -m -clib=aqplus $< -o $@
+	zcc +aquarius -compiler=sdcc -m -clib=aqplus $< -o $@
 
 %.bas: %.txt
 	./txt2bas.py $< $@
