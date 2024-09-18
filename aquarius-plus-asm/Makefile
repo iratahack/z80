@@ -2,14 +2,14 @@ PROJ=main
 
 .PHONY: all clean
 
-all: $(PROJ).bas $(PROJ).bin
+all: $(PROJ).baq $(PROJ).bin
 
 %.bin: %.asm
 	zcc +aquarius -m -clib=aqplus $< -o $@
 
-%.bas: %.txt
-	./txt2bas.py $< $@
+%.baq: %.bas
+	./bas2baq.py $< $@
 
 clean:
-	rm -f *.bin *.bas *.map
+	rm -f *.bin *.baq *.map
 
