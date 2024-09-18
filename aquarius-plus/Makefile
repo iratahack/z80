@@ -1,14 +1,6 @@
-ifeq ($(OS),Windows_NT)
-	RM=del
-else
-	RM=rm -f
-endif
-
 AS=z88dk-z80asm
 ASFLAGS=-mz80 -m -b
-
 PROJECT_NAME:=main
-
 ASMSRC=$(wildcard *.asm)
 
 .PHONY: all clean run dis
