@@ -8,7 +8,7 @@ ASMSRC=$(wildcard *.asm)
 all: $(PROJECT_NAME).aqx
 
 clean:
-	$(RM) *.aqx *.map *.bin *.o
+	rm -f *.aqx *.map *.bin *.o
 
 dis: $(PROJECT_NAME).bin
 	z88dk-dis -x $(PROJECT_NAME).map -o CRT_ORG_CODE $(PROJECT_NAME).bin | less
