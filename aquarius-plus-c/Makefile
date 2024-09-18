@@ -1,5 +1,5 @@
 CC=zcc
-CFLAGS=+aquarius -m -pragma-include:zpragma.inc
+CFLAGS=+aquarius -compiler=sdcc -m -pragma-include:zpragma.inc
 PROJECT_NAME:=main
 CSRC=$(wildcard *.c)
 
