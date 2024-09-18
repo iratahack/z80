@@ -1,15 +1,32 @@
-PROJ=main
+ifeq ($(OS),Windows_NT)
+	RM=del
+else
+	RM=rm -f
+endif
 
-.PHONY: all clean
+AS=z88dk-z80asm
+ASFLAGS=-mz80 -m -b
 
-all: $(PROJ).bas $(PROJ).bin
+PROJECT_NAME:=main
 
-%.bin: %.c
-	zcc +aquarius -compiler=sdcc -m -clib=aqplus $< -o $@
+ASMSRC=$(wildcard *.asm)
 
-%.bas: %.txt
-	./txt2bas.py $< $@
+.PHONY: all clean run dis
+
+all: $(PROJECT_NAME).aqx
 
 clean:
-	rm -f *.bin *.bas *.map
+	$(RM) *.aqx *.map *.bin *.o
+
+dis: $(PROJECT_NAME).bin
+	z88dk-dis -x $(PROJECT_NAME).map -o CRT_ORG_CODE $(PROJECT_NAME).bin | less
+
+run: all
+	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqx\n"
+
+%.bin: $(ASMSRC)
+	$(AS) $(ASFLAGS) $^ -o$(PROJECT_NAME).bin
+
+%.aqx: %.bin
+	z88dk-appmake +aquarius -b $< --aqx
 

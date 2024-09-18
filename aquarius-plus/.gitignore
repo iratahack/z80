@@ -1,1 +1,4 @@
-*.bas
+*.aqx
+*.o
+*.bin
+*.map
