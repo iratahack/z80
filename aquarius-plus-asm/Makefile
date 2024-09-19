@@ -1,15 +1,18 @@
-PROJ=main
+PROJECT_NAME=main
 
 .PHONY: all clean
 
-all: $(PROJ).baq $(PROJ).bin
+all: $(PROJECT_NAME).bin
+
+dis: all
+	z88dk-dis -x $(PROJECT_NAME).map -o CRT_ORG_CODE $(PROJECT_NAME).bin | less
+
+run: all
+	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqx\n"
 
 %.bin: %.asm
-	zcc +aquarius -m -clib=aqplus $< -o $@
-
-%.baq: %.bas
-	./bas2baq.py $< $@
+	zcc +aquarius -pragma-include:zpragma.inc -m -clib=aqplus $< -o $@ -create-app -subtype=aqx
 
 clean:
-	rm -f *.bin *.baq *.map
+	rm -f *.bin *.aqx *.map
 
