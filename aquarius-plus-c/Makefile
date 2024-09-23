@@ -1,5 +1,5 @@
 CC=zcc
-CFLAGS=+aquarius -compiler=sdcc -clib=aqplus -m -pragma-include:zpragma.inc --legacy-banking
+CFLAGS=+aquarius -compiler=sdcc -clib=aqplus -m -pragma-include:zpragma.inc
 PROJECT_NAME:=main
 CSRC=$(wildcard *.c)
 

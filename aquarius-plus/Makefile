@@ -8,17 +8,17 @@ ASMSRC=$(wildcard *.asm)
 all: $(PROJECT_NAME).aqx
 
 clean:
-	rm -f *.aqx *.map *.bin *.o
+	rm -f *.aqex *.map *.bin *.o
 
 dis: $(PROJECT_NAME).bin
 	z88dk-dis -x $(PROJECT_NAME).map -o CRT_ORG_CODE $(PROJECT_NAME).bin | less
 
 run: all
-	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqx\n"
+	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqex\n"
 
 %.bin: $(ASMSRC)
 	$(AS) $(ASFLAGS) $^ -o$(PROJECT_NAME).bin
 
 %.aqx: %.bin
-	z88dk-appmake +aquarius -b $< --aqx
+	z88dk-appmake +aquarius -b $< --aqex
 
