@@ -48,7 +48,11 @@ initISR:
 
         extern  _titleMusic
 start:
+        ld      sp, stackTop
         call    initISR
         call    _titleMusic
         jr      $
 
+        section BSS_0
+        ds      $20, $55
+stackTop:
