@@ -19,14 +19,7 @@
         defc    VOLUME_ENABLE=$10
   ENDIF
 
-        ;
-        ; Code in this module is self modifying.
-        ; For this reason it must be executed from RAM.
-        ; It is placed in the data_user section and the
-        ; CRT code copies it from ROM to RAM during boot.
-        ;
-
-        section CODE_0
+        section code_user
 
 ; *****************************************************************************
 ; * Phaser1 Engine, With Digital Drum Samples
@@ -477,7 +470,7 @@ L824D:  DEC     E
         JR      NZ, NEXT_SAMPLE
         JP      MAIN_LOOP
 
-        section BSS_0
+        section bss_user
 PATTERN_ADDR:
         DEFW    $0000
 PATTERN_PTR:
@@ -485,7 +478,7 @@ PATTERN_PTR:
 NOTE_PTR:
         DEFW    $0000
 
-        section RODATA_0
+        section rodata_user
 
 PSG_REG_SEC:
         db      $00
