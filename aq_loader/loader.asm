@@ -13,7 +13,7 @@ IO_VCTRL    equ $e0
         extern  __BANK_1_head
         org     $38E1
 basicLoader:
-        binary  "loader.bas"
+        binary  "loader.baq"
 init:
         di
         ld      sp, loaderEnd           ; New stack

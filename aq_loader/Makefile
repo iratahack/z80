@@ -5,16 +5,16 @@ A_SRC:= loader.asm vectors.asm phaser1.asm
 all: loader.aqx
 
 clean:
-	rm -rf *.bas *.aqx *.scr *.map *.bin
+	rm -rf *.baq *.aqx *.scr *.map *.bin
 
-run:
+run: all
 	aquarius_emu -u . -t "\nrun loader.aqx\n"
 
-loader.aqx: $(A_SRC) loader.bas loading_screen.scr
+loader.aqx: $(A_SRC) loader.baq loading_screen.scr
 	zcc +aquarius -crt0 crt.asm $(A_SRC) -m $< -o $@
 
-%.bas: %.txt
-	./txt2bas.py $< $@
+%.baq: %.bas
+	./bas2baq.py $< $@
 
 %.scr: %.png
 	./png2bm.py $< $@
