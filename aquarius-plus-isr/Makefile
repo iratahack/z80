@@ -1,6 +1,8 @@
-CC=zcc
-CFLAGS=+aquarius -clib=aqplus -m -pragma-include:zpragma.inc
-PROJECT_NAME:=main
+PROJECT_NAME := isr
+
+CC	:= zcc
+CFLAGS	:= +aquarius -clib=aqplus -m -pragma-include:zpragma.inc -create-app -subtype=aqx
+
 CSRC=$(wildcard *.c)
 ASSRC=$(wildcard *.asm)
 
@@ -18,5 +20,4 @@ run: all
 	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqx\n"
 
 %.aqx: $(CSRC) $(ASSRC)
-	$(CC) $(CFLAGS) $^ -o$(PROJECT_NAME).bin -create-app -subtype=aqx
-
+	$(CC) $(CFLAGS) $^ -o$(PROJECT_NAME).bin

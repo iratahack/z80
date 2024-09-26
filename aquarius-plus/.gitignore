@@ -1,4 +1,5 @@
 *.aqex
+*.aqx
 *.o
 *.bin
 *.map
