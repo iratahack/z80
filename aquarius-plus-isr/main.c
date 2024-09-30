@@ -1,40 +1,32 @@
+#include <stdio.h>
+#include <interrupt.h>
 #include <intrinsic.h>
-#include <arch/z80.h>
-#include <arch/aqplus.h>
+#include <games.h>
 
-#define ISR_ADDR	(0x38)
-#define Z80_OPCODE_JP	(0xc3)
-
-void service_interrupt( void )
+isr_t ISR( void )
 {
-	IO_IRQSTAT = 1;
-	intrinsic_ei();
+	M_PRESERVE_MAIN;
+
+	// Do something really cool here!
+
+	M_RESTORE_MAIN;
 }
 
 void main(void)
 {
-	intrinsic_di();
+	int	a;
 
-	// Disable readonly on BANK 0
-	IO_BANK0 = IO_BANK0 & 0x7f;	
+	// Setup im1 interrupts
+	im1_init();
 
-	// Add 'jp service_interrupt' to address 0x38
-	z80_bpoke( ISR_ADDR, Z80_OPCODE_JP );
-	z80_wpoke( ISR_ADDR + 1, (uint16_t) service_interrupt );
-
-	// Unmask VBLANK interrupt
-	IO_IRQMASK = 1;
-
-	// Clear VBLANK interrupt status
-	IO_IRQSTAT = 1;
-
-	// Interrupt mode 1, rst 0x38
-	intrinsic_im_1();
-
-	// Enable interrupts
-	intrinsic_ei();
+	// Install user ISR
+	im1_install_isr(ISR);
 
 	do {
 		intrinsic_halt();
+		a = joystick(1);
+		printf("0x%02x\n", a);
+		if ( a & 0x10 )
+			return(0);
 	} while(1);
 }
