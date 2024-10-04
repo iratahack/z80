@@ -5,7 +5,7 @@ PROJ=main
 all: $(PROJ).bin
 
 %.bin: %.c
-	zcc +aquarius -m -clib=ansi $< -o $@  -create-app
+	zcc +aquarius -m -clib=ansi $< -o $@  -create-app -subtype=rom
 
 clean:
 	rm -f *.bin *.caq *.rom *.map
