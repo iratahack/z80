@@ -6,17 +6,17 @@ ASSRC=$(wildcard *.asm)
 
 .PHONY: all clean run dis
 
-all: $(PROJECT_NAME).aqx
+all: $(PROJECT_NAME).aqex
 
 clean:
-	rm -f *.aqx *.map *.bin *.o
+	rm -f *.aqex *.map *.bin *.o
 
 dis: all
 	z88dk-dis -x $(PROJECT_NAME).map -o CRT_ORG_CODE $(PROJECT_NAME).bin | less
 
 run: all
-	aquarius_emu -u . -t "\nrun $(PROJECT_NAME).aqx\n"
+	aqplus-emu -u . -t "\nrun $(PROJECT_NAME).aqex\n"
 
-%.aqx: $(CSRC) $(ASSRC)
-	$(CC) $(CFLAGS) $^ -o$(PROJECT_NAME).bin -create-app -subtype=aqx
+%.aqex: $(CSRC) $(ASSRC)
+	$(CC) $(CFLAGS) $^ -o$(PROJECT_NAME).bin -create-app -subtype=aqex
 
