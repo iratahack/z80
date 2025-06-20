@@ -1,5 +1,5 @@
 CRT_ORG_CODE    equ $4000
-print_c_string  equ $210c
+	#include "kernel.inc"
 
         org     CRT_ORG_CODE
 _main:
