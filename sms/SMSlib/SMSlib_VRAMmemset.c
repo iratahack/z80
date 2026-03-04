@@ -42,14 +42,13 @@ __asm
 
   ld e,b             ; HI(size)
   ld b,c             ; LO(size)
-  ld c,#_VDPDataPort
 
-_vrammemset_loop:
-  out (c),a
-  nop
-  djnz _vrammemset_loop
+1$:
+  out(#_VDPDataPort),a ; 11
+  .db 0                ;  4
+  djnz 1$              ; 13 = 28 (VRAM safe on GG too)
   dec e
-  jp  nz,_vrammemset_loop
+  jp  nz,1$
   ret                ; because this function is naked
 __endasm;
 }
@@ -77,14 +76,14 @@ __asm
 
   ld c,#_VDPDataPort
 
-_vrammemsetw_loop:
+2$:
   out(c),e           ; 12
   dec hl             ;  6
   dec hl             ;  6
   ld a,h             ;  4 = 28 (VRAM safe on GG too)
   out(c),d           ; 12
   or a,l             ;  4
-  jr nz,_vrammemsetw_loop ; 12 = 28 (VRAM safe on GG too)
+  jr nz,2$           ; 12 = 28 (VRAM safe on GG too)
   ret                ; because this function is naked
 __endasm;
 }

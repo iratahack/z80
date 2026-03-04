@@ -94,31 +94,31 @@ dzx7s_outer_loop:
   ld b,a
 
 dzx7s_inner_loop:
-  nop
-  di
+  .db 0                   ; 4
+  di                      ; 4 = 27 (safe on every Master System or Game Gear)
   out (c),l
   out (c),h
-  ei
-  inc hl
-  xor a
-  ret nz
-  nop
-  nop
+  ei             ; 4
+  inc hl         ; 6
+  xor a          ; 4
+  ret nz         ; 5      (this ret will never happen, it is just to wait 5 cycles)
+  .db 0          ; 4
+  .db 0          ; 4 = 27 (safe on every Master System or Game Gear)
   in a,(#0xbe)
 
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  di
+  .db 0          ; 4
+  .db 0          ; 4
+  .db 0          ; 4
+  .db 0          ; 4
+  .db 0          ; 4
+  .db 0          ; 4
+  di             ; 4 = 28 (safe on every Master System or Game Gear)
   out (c),e
   out (c),d
   ei
   out (#0xbe),a
-  inc de
-  djnz dzx7s_inner_loop
+  inc de                  ; 6
+  djnz dzx7s_inner_loop   ; 13
   ld a,b
   pop bc
   djnz dzx7s_outer_loop

@@ -37,17 +37,17 @@ __asm
     di
     out (c),l
     out (c),h
-    ei
+    ei                               ; 4
 
-    ld bc,#64
-    add hl,bc
+    ld bc,#64                        ; 10
+    add hl,bc                        ; 11
 
-    ld c,#_VDPDataPort
+    ld c,#_VDPDataPort               ; 7 = VRAM safe
 
-    in a,(c)
-    ld (de),a
-    inc de
-    nop
+    in a,(c)                         ; 12
+    ld (de),a                        ; 7
+    inc de                           ; 6
+    .db 0                            ; 4 = VRAM safe
 
     in a,(c)
     ld (de),a
@@ -90,8 +90,8 @@ __asm
 
     ld c,#_VDPDataPort
 1$:
-    ini
-    jr  nz,1$
+    ini             ; 16
+    jr  nz,1$       ; 12 = 28 (safe on every Game Gear too)
     dec a
     jp nz, 1$
     ret

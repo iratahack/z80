@@ -12,20 +12,52 @@ extern unsigned char SpriteNextFree;
 
 // VRAM unsafe functions. Fast, but dangerous!
 void UNSAFE_SMS_copySpritestoSAT (void) {
-  unsigned char count;
-
-  count=SpriteNextFree;
-
   SMS_setAddr(SMS_SATAddress);
-  if (count==0) {
-    SMS_byte_to_VDP_data(0xD0);
-    return;
-  }
-
-  SMS_byte_brief_array_to_VDP_data(SpriteTableY, count);
-  if (count<64)
-    SMS_byte_to_VDP_data(0xD0);
-
-  SMS_setAddr(SMS_SATAddress+128);
-  SMS_byte_brief_array_to_VDP_data(SpriteTableXN, count*2);
+  __asm
+    EXTERN _outi_block
+    ld a,(#_SpriteNextFree)
+    or a
+    jr z,_no_sprites
+    add a,a                 ; SpriteNextFree*=2 (and reset carry)
+    ld c,a
+    ld b,#0
+    ld hl,#_outi_block
+    sbc hl,bc
+    ex de,hl
+    ld hl,#_SpriteTableY
+    call _do_copy_Y
+    ld a,(#_SpriteNextFree)
+    cp #64
+    jr z,_no_sprite_term
+    ld a,#0xD0
+    out (c),a
+_no_sprite_term:
+  __endasm;
+ SMS_setAddr(SMS_SATAddress+128);
+  __asm
+    EXTERN _outi_block
+    ld a,(#_SpriteNextFree)
+    dec a                   ; there is surely at least one sprite used
+    add a,a
+    add a,a                 ; a=(SpriteNextFree-1)*4 (and reset carry)
+    ld c,a
+    ld b,#0
+    ld hl,#_outi_block
+    dec hl
+    dec hl
+    dec hl
+    dec hl
+    sbc hl,bc
+    push hl                 ; push jump address into stack
+    ld hl,#_SpriteTableXN
+    ld c,#_VDPDataPort
+    ret                     ; get jump address from stack
+_do_copy_Y:
+    ld c,#_VDPDataPort
+    push de
+    ret                     ; get jump address from stack
+_no_sprites:
+    ld a,#0xD0
+    out (#_VDPDataPort),a
+  __endasm;
 }
