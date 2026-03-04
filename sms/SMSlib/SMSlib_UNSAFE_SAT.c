@@ -42,11 +42,7 @@ _no_sprite_term:
     add a,a                 ; a=(SpriteNextFree-1)*4 (and reset carry)
     ld c,a
     ld b,#0
-    ld hl,#_outi_block
-    dec hl
-    dec hl
-    dec hl
-    dec hl
+    ld hl,#_outi_block - 4
     sbc hl,bc
     push hl                 ; push jump address into stack
     ld hl,#_SpriteTableXN
