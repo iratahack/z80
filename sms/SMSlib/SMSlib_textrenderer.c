@@ -6,6 +6,10 @@
 #include "SMSlib.h"
 #include "SMSlib_common.c"
 
+#ifdef putchar
+#undef putchar
+#endif
+
 signed int SMS_TextRenderer_offset;
 
 void SMS_configureTextRenderer (signed int ascii_to_tile_offset) __z88dk_fastcall {
@@ -15,9 +19,8 @@ void SMS_configureTextRenderer (signed int ascii_to_tile_offset) __z88dk_fastcal
 #pragma save
 #pragma disable_warning 59
 
-int my_putchar (int c) {
+int putchar (int c) {
   SMS_setTile(c+SMS_TextRenderer_offset);
-  return c;
 }
 
 #pragma restore

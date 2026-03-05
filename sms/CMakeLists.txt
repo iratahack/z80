@@ -7,15 +7,16 @@ set(CMAKE_TOOLCHAIN_FILE /snap/z88dk/current/share/z88dk/cmake/Toolchain-zcc.cma
 
 project(Hello C)
 
-add_link_options(-m -create-app -L${PROJECT_SOURCE_DIR} -pragma-include:${PROJECT_SOURCE_DIR}/zpragma.inc)
-add_compile_options(-compiler=sdcc --fsigned-char -pragma-include:${PROJECT_SOURCE_DIR}/zpragma.inc  -custom-copt-rules=${PROJECT_SOURCE_DIR}/SMSlib/rules.copt)
-
+add_link_options(-m -create-app -L${PROJECT_SOURCE_DIR} -pragma-redirect:fputc_cons=_SMS_putchar)
+add_compile_options(-compiler=sdcc --fsigned-char -custom-copt-rules=${PROJECT_SOURCE_DIR}/SMSlib/rules.copt -DVDPTYPE_DETECTION)
+add_subdirectory(SMSlib)
 add_executable(${PROJECT_NAME} main.c)
 add_dependencies(${PROJECT_NAME} SMSlib)
 
 target_link_options(${PROJECT_NAME} PRIVATE -L${PROJECT_BINARY_DIR}/SMSlib -llibSMSlib)
-add_subdirectory(SMSlib)
-#target_link_libraries(${PROJECT_NAME} PRIVATE SMSlib)
+
+# Add the library file as a link dependency so CMake re-links when it changes
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${PROJECT_BINARY_DIR}/SMSlib/libSMSlib.lib)
     
 add_custom_target(run gearsystem.exe ${PROJECT_NAME}.sms DEPENDS ${PROJECT_NAME})
 

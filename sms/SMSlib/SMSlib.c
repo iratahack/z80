@@ -78,31 +78,31 @@ unsigned char SMS_detect_VDP_type (void) __z88dk_fastcall __naked __preserves_re
   __asm
 
     in a,(0x7E)
-1$:
+@wait:
     ld b,a
     in a,(0x7E)
     cp b
-    jr nz,1$          ; wait until stable value
+    jr nz,@wait       ; wait until stable value
 
     cp #0x80
-    jr nz,1$          ; wait until line $80
+    jr nz,@wait       ; wait until line $80
 
     ld l,a            ; load line number in L
 
 
     in a,(0x7E)
-2$:
+@wait1:
     ld b,a
     in a,(0x7E)
     cp b
-    jr nz,2$          ; wait until stable value
+    jr nz,@wait1      ; wait until stable value
 
     cp l
-    jr z,2$           ; wait until it is no longer on the same line
+    jr z,@wait1       ; wait until it is no longer on the same line
     ret c             ; we are done when new line value is less than the old one
 
     ld l,a
-    jp 2$
+    jp @wait1
   __endasm;
 }
 #endif
