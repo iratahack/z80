@@ -336,12 +336,12 @@ void SMS_setLineCounter (unsigned char count) __z88dk_fastcall {
 unsigned char SMS_getVCount (void) __naked __preserves_regs(c,d,e,h,l,iyh,iyl) {
   __asm
     in a,(0x7E)
-1$:
+@loop:
     ld b,a
     in a,(0x7E)
     cp b
     ret z          ; when we got the same value twice it is stable (Genesis/MegaDrive issue workaround)
-    jp 1$          ; wait until value is stable
+    jp @loop       ; wait until value is stable
   __endasm;
 }
 

@@ -61,33 +61,36 @@ inline void SMS_byte_brief_array_to_VDP_data (const unsigned char *data, unsigne
   } while (--size);
 }
 
-#define ASM_DE_TO_VDP_CONTROL  \
-  __asm                        \
-    ld c,#_VDPControlPort      \
-    di                         \
-    out (c),e                  \
-    out (c),d                  \
-    ei                         \
-  __endasm
+#define ASM_DE_TO_VDP_CONTROL   \
+  __asm__("                     \
+    ld c,#_VDPControlPort       \n \
+    di                          \n \
+    out (c),e                   \n \
+    out (c),d                   \n \
+    ei                          \n \
+  ")
+
   // writes a control word to VDP
   // it's INTerrupt safe (DI/EI around control port writes)
   // controlword in DE
 
-#define ASM_L_TO_VDP_DATA                                 \
-  __asm                                                   \
-    ld a,l                                                \
-    out (_VDPDataPort),a      ; 11                        \
-  __endasm
+#define ASM_L_TO_VDP_DATA \
+    __asm__("                    \
+      ld a,l                  \n \
+      out (_VDPDataPort),a    \n \
+    ")
+
   // writes one byte to VDP
   // it's VRAM safe since it's used by SMS_setColor which adds enough overhead (call/ret)
   // byte will be passed in L
+#define ASM_SHORT_XFER_TO_VDP_DATA \
+  __asm__("                    \
+    ld c,#_VDPDataPort      \n \
+ @loop:                     \n \
+    outi                    \n \
+    jr nz, @loop            \n \
+  ")
 
-#define ASM_SHORT_XFER_TO_VDP_DATA                                \
-  __asm                                                           \
-    ld c,#_VDPDataPort                                            \
-1$: outi                       ; 16                               \
-    jr nz,1$                   ; 12 = 28 *VRAM SAFE ON GG TOO*    \
-  __endasm
   // writes B bytes from (HL) on to VDP
   // it's VRAM safe on GG too (at least 27 cycles between writes)
 
