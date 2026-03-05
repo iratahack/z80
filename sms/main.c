@@ -9,15 +9,17 @@ unsigned char pal2[] = {0x00, 0x03, 0x08, 0x28, 0x02, 0x22, 0x0A, 0x2A,
                         0x15, 0x35, 0x1D, 0x3D, 0x17, 0x37, 0x1F, 0x3F};
 
 extern unsigned char SpriteNextFree;
-__sfr __at 0xDC IOPortL;
+
+static unsigned char ntsc;
+static unsigned char ntsc_frame;
+static unsigned char sprite;
 
 void main(void)
 {
     int x = 124;
     int y = 92;
-    unsigned char sprite;
-    unsigned char ntsc = SMS_VDPType() != VDP_PAL;
-    unsigned char ntsc_frame = 0;
+
+    ntsc = SMS_VDPType() != VDP_PAL;
 
     SMS_init();
     SMS_autoSetUpTextRenderer();
@@ -51,20 +53,19 @@ void main(void)
     {
         SMS_updateSpritePosition(sprite, x, y);
         SMS_updateSpritePosition(sprite + 1, x + 8, y);
-        char status = IOPortL;
-        if ((status & PORT_A_KEY_UP) == 0 && y > 0)
+        char status = SMS_getKeysStatus();
+        if ((status & PORT_A_KEY_UP) && y > 0)
             y -= 2;
-        else
-        if ((status & PORT_A_KEY_DOWN) == 0 && y < 192 - 16)
+        else if ((status & PORT_A_KEY_DOWN) && y < 192 - 16)
             y += 2;
-        if ((status & PORT_A_KEY_LEFT) == 0 && x > 0)
+        if ((status & PORT_A_KEY_LEFT) && x > 0)
             x -= 2;
-        else
-        if ((status & PORT_A_KEY_RIGHT) == 0 && x < 256 - 16)
+        else if ((status & PORT_A_KEY_RIGHT) && x < 256 - 16)
             x += 2;
+
         // Wait for the next frame
         __asm__("halt");
-#if 0
+#if 1
         if (ntsc)
         {
             // Insert an extra wait every 5 frames to run at PAL speed on NTSC
