@@ -1,0 +1,15 @@
+;;
+;; devkitSMS RST Optimization Rules
+;; Replaces call to RST handlers with actual RST instructions
+;;
+
+%title Replace call to RST08 with rst instruction
+	call	_SMS_crt0_RST08
+=
+	rst	$08
+
+%title Replace call to RST18 with rst instruction (alternative spacing)
+	call	_SMS_crt0_RST18
+=
+	rst	$18
+

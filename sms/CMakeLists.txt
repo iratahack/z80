@@ -8,7 +8,7 @@ set(CMAKE_TOOLCHAIN_FILE /snap/z88dk/current/share/z88dk/cmake/Toolchain-zcc.cma
 project(Hello C)
 
 add_link_options(-m -create-app -L${PROJECT_SOURCE_DIR} -pragma-include:${PROJECT_SOURCE_DIR}/zpragma.inc)
-add_compile_options(-compiler=sdcc --fsigned-char -pragma-include:${PROJECT_SOURCE_DIR}/zpragma.inc)
+add_compile_options(-compiler=sdcc --fsigned-char -pragma-include:${PROJECT_SOURCE_DIR}/zpragma.inc  -custom-copt-rules=${PROJECT_SOURCE_DIR}/SMSlib/rules.copt)
 
 add_executable(${PROJECT_NAME} main.c)
 add_dependencies(${PROJECT_NAME} SMSlib)
