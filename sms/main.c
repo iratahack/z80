@@ -104,6 +104,23 @@ void main(void)
             }
         }
 
+        if(SMS_queryPauseRequested())
+        {
+            static unsigned char buffer[12];
+
+            SMS_resetPauseRequest();
+
+            SMS_saveTileMapArea(13, 12, buffer, 6, 1);
+            SMS_printatXY(13, 12, "PAUSED");
+
+            // Loop until pause is requested again (unpause)
+            while(!SMS_queryPauseRequested())
+                __asm__("halt");
+
+            SMS_resetPauseRequest();
+            SMS_loadTileMapArea(13, 12, buffer, 6, 1);
+        }
+
         // Update the sprites
         SMS_copySpritestoSAT();
     }

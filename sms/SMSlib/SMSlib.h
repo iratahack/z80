@@ -346,7 +346,7 @@ unsigned char SMS_readPaddle (unsigned char port) __z88dk_fastcall __naked;
 
 #ifndef TARGET_GG
 /* pause handling (SMS only) */
-_Bool SMS_queryPauseRequested (void);
+unsigned char SMS_queryPauseRequested (void);
 void SMS_resetPauseRequest (void);
 #endif
 

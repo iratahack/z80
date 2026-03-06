@@ -310,7 +310,7 @@ unsigned int SMS_getMDKeysReleased (void) {
 #endif
 
 #ifndef TARGET_GG
-_Bool SMS_queryPauseRequested (void) {
+unsigned char SMS_queryPauseRequested (void) {
   return(PauseRequested);
 }
 

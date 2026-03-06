@@ -189,6 +189,10 @@ IF (ASMPC<>$0066)
 ENDIF
 
 IF (__crt_enable_nmi = 1)
+  IFDEF SMSLIB
+    EXTERN  _SMS_nmi_isr
+    jp      _SMS_nmi_isr
+  ELSE
     EXTERN _z80_nmi
 int_PAUSE: 
     push    af 
@@ -202,6 +206,7 @@ int_PAUSE:
     pop     hl 
     pop     af 
     retn 
+  ENDIF
 ELSE 
   IF (__crt_enable_nmi > 1)
     jp     __z80_nmi
