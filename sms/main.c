@@ -10,14 +10,14 @@ unsigned char pal2[] = {0x00, 0x03, 0x08, 0x28, 0x02, 0x22, 0x0A, 0x2A,
 
 extern unsigned char SpriteNextFree;
 
-static unsigned char ntsc;
-static unsigned char ntsc_frame;
-static unsigned char sprite;
-
 void main(void)
 {
-    int x = 124;
-    int y = 92;
+    static int x = 256/2 - 8;
+    static int y = 192/2 - 4;
+    static unsigned char sprite;
+    static unsigned char lastKey;
+    static unsigned char ntsc_frame;
+    static unsigned char ntsc;
 
     ntsc = SMS_VDPType() != VDP_PAL;
 
@@ -51,21 +51,48 @@ void main(void)
 
     for (;;)
     {
+        static char keyStatus;
         SMS_updateSpritePosition(sprite, x, y);
         SMS_updateSpritePosition(sprite + 1, x + 8, y);
-        char status = SMS_getKeysStatus();
-        if ((status & PORT_A_KEY_UP) && y > 0)
+        keyStatus = SMS_getKeysStatus();
+
+        // Up or Down?
+        if ((keyStatus & PORT_A_KEY_UP) && y > 0)
             y -= 2;
-        else if ((status & PORT_A_KEY_DOWN) && y < 192 - 16)
+        else if ((keyStatus & PORT_A_KEY_DOWN) && y < 192 - 16)
             y += 2;
-        if ((status & PORT_A_KEY_LEFT) && x > 0)
+
+        // Left or Right?
+        if ((keyStatus & PORT_A_KEY_LEFT) && x > 0)
             x -= 2;
-        else if ((status & PORT_A_KEY_RIGHT) && x < 256 - 16)
+        else if ((keyStatus & PORT_A_KEY_RIGHT) && x < 256 - 16)
             x += 2;
+
+        lastKey ^= keyStatus; // XOR to find which keys changed since last frame
+
+        if (lastKey & PORT_A_KEY_START)
+        {
+            // Was it pressed or released?
+            if(keyStatus & PORT_A_KEY_START)
+                SMS_setSpritePaletteColor(1, 0x3f); // Pressed
+            else
+                SMS_setSpritePaletteColor(1, 0x03); // Released
+        }
+
+        if (lastKey & PORT_A_KEY_2)
+        {
+            // Was it pressed or released?
+            if(keyStatus & PORT_A_KEY_2)
+                SMS_setSpritePaletteColor(1, 0x0f); // Pressed
+            else
+                SMS_setSpritePaletteColor(1, 0x03); // Released
+        }
+
+        lastKey = keyStatus;
 
         // Wait for the next frame
         __asm__("halt");
-#if 1
+
         if (ntsc)
         {
             // Insert an extra wait every 5 frames to run at PAL speed on NTSC
@@ -76,7 +103,7 @@ void main(void)
                 ntsc_frame = 0;
             }
         }
-#endif
+
         // Update the sprites
         SMS_copySpritestoSAT();
     }
