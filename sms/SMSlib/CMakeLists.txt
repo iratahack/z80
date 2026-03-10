@@ -1,5 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    # Set the z88dk target for this build
+    set(ZCCTARGET sms)
+    # Use the z88dk provided tool configuration from the snap install
+    set(CMAKE_TOOLCHAIN_FILE /snap/z88dk/current/share/z88dk/cmake/Toolchain-zcc.cmake)
+    project(SMSlib C ASM)
+endif()
+
+if(TARGET SMSlib)
+    return()
+endif()
+
 add_library(SMSlib STATIC
     SMSlib.c
     SMSlib_aPLib.c
@@ -39,4 +51,4 @@ add_library(SMSlib STATIC
     SMSlib_OUTI.asm
 )
 
-target_compile_options(SMSlib PRIVATE --max-allocs-per-node100000)
+target_compile_options(SMSlib PRIVATE -compiler=sdcc --max-allocs-per-node100000 -O3 -SO3 --fsigned-char -custom-copt-rules=${CMAKE_CURRENT_SOURCE_DIR}/rules.copt -DVDPTYPE_DETECTION)
