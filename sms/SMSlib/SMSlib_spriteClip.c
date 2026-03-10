@@ -6,16 +6,11 @@
 #include "SMSlib.h"
 #include "SMSlib_common.c"
 
-extern unsigned char spritesHeight, spritesWidth;
 #ifdef TARGET_GG
 unsigned char clipWin_x0=48,clipWin_y0=24,clipWin_x1=207,clipWin_y1=167;
 #else
 unsigned char clipWin_x0,clipWin_y0,clipWin_x1=255,clipWin_y1=191;
 #endif
-
-extern unsigned char SpriteTableY[MAXSPRITES];
-extern unsigned char SpriteTableXN[MAXSPRITES*2];
-extern unsigned char SpriteNextFree;
 
 void SMS_setClippingWindow (unsigned char x0, unsigned char y0, unsigned char x1, unsigned char y1) {
   clipWin_x0=x0;

@@ -108,17 +108,17 @@ _transfer_whole_buffer_B_times:
   ld de,#_stc4_buffer
   ld a,(de)                           ; 7
   out (#0xbe),a                       ; 11
-  .db 0                               ; 4
+  .db #0x00                           ; 4 (nop)
   inc de                              ; 6  = 28
 
   ld a,(de)                           ; 7
   out (#0xbe),a                       ; 11
-  .db 0                               ; 4
+  .db #0x00                           ; 4 (nop)
   inc de                              ; 6  = 28
 
   ld a,(de)                           ; 7
   out (#0xbe),a                       ; 11
-  .db 0                               ; 4
+  .db #0x00                           ; 4 (nop)
   inc de                              ; 6  = 28
 
   ld a,(de)                           ; 7

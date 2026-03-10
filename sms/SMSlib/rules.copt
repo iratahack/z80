@@ -1,5 +1,5 @@
 ;;
-;; devkitSMS RST Optimization Rules
+;; z88dk devkitSMS RST Optimization Rules
 ;; Replaces call to RST handlers with actual RST instructions
 ;;
 

@@ -15,10 +15,6 @@ void * UNSAFE_SMS_VRAMmemcpy32 (unsigned int dst, const void *src) __naked __pre
   // src in DE
   // returns a void pointer to src+32 in HL
 __asm
-  EXTERN _OUTI32
-  EXTERN _OUTI64
-  EXTERN _OUTI96
-  EXTERN _OUTI128
   set 6, h           ; set VRAM address write flag
   rst #0x08
 
@@ -33,10 +29,6 @@ void * UNSAFE_SMS_VRAMmemcpy64 (unsigned int dst, const void *src) __naked __pre
   // src in DE
   // returns a void pointer to src+64 in HL
 __asm
-  EXTERN _OUTI32
-  EXTERN _OUTI64
-  EXTERN _OUTI96
-  EXTERN _OUTI128
   set 6, h           ; set VRAM address write flag
   rst #0x08
 
@@ -51,10 +43,6 @@ void * UNSAFE_SMS_VRAMmemcpy96 (unsigned int dst, const void *src) __naked __pre
   // src in DE
   // returns a void pointer to src+96 in HL
 __asm
-  EXTERN _OUTI32
-  EXTERN _OUTI64
-  EXTERN _OUTI96
-  EXTERN _OUTI128
   set 6, h           ; set VRAM address write flag
   rst #0x08
 
@@ -69,10 +57,6 @@ void * UNSAFE_SMS_VRAMmemcpy128 (unsigned int dst, const void *src) __naked __pr
   // src in DE
   // returns a void pointer to src+128 in HL
 __asm
-  EXTERN _OUTI32
-  EXTERN _OUTI64
-  EXTERN _OUTI96
-  EXTERN _OUTI128
   set 6, h           ; set VRAM address write flag
   rst #0x08
 

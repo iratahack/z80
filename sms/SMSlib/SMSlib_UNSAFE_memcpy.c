@@ -17,8 +17,6 @@ void * UNSAFE_SMS_VRAMmemcpy (unsigned int dst, const void *src, unsigned int si
   // size onto the stack
   // returns a void pointer to src+size in HL
 __asm
-  EXTERN _OUTI128
-  EXTERN _outi_block
   set 6, h           ; set VRAM address write flag
   rst #0x08
 

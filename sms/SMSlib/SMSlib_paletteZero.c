@@ -16,7 +16,7 @@ void SMS_zeroBGPalette (void) {
   __asm
     xor a
 1$: out (_VDPDataPort),a       ; 11
-    nop                        ; 4
+    .db #0x00                  ; 4 (nop)
     djnz 1$                    ; 13 = 28 *VRAM SAFE ON GG TOO*
   __endasm;
 }
@@ -28,7 +28,7 @@ void SMS_zeroSpritePalette (void) {
   __asm
     xor a
 1$: out (_VDPDataPort),a       ; 11
-    nop                        ; 4
+    .db #0x00                  ; 4 (nop)
     djnz 1$                    ; 13 = 28 *VRAM SAFE ON GG TOO*
   __endasm;
 }
@@ -40,7 +40,7 @@ void GG_zeroBGPalette (void) {
   __asm
     xor a
 1$: out (_VDPDataPort),a       ; 11
-    nop                        ; 4
+    .db #0x00                  ; 4 (nop)
     djnz 1$                    ; 13 = 28 *VRAM SAFE ON GG TOO*
   __endasm;
 }
@@ -52,7 +52,7 @@ void GG_zeroSpritePalette (void) {
   __asm
     xor a
 1$: out (_VDPDataPort),a       ; 11
-    nop                        ; 4
+    .db #0x00                  ; 4 (nop)
     djnz 1$                    ; 13 = 28 *VRAM SAFE ON GG TOO*
   __endasm;
 }

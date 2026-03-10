@@ -1,3 +1,5 @@
+#ifndef _SMSLIB_H_
+#define _SMSLIB_H_
 /* **************************************************
    SMSlib - C programming library for the SMS/GG
    ( part of devkitSMS - github.com/sverx/devkitSMS )
@@ -215,6 +217,15 @@ void SMS_copySpritestoSAT (void);
 #define SMS_addMetaSprite(x,y,metasprite)               SMS_addMetaSprite_f(((x)&0xff)|(((unsigned int)(y)&0xff)<<8),(metasprite))
 void SMS_addMetaSprite_f (unsigned int origin_yx, void *metasprite) __naked __sdcccall(1);                                     /* doesn't return anything */
 
+#ifndef MAXSPRITES
+#define MAXSPRITES        64
+#endif
+
+extern unsigned char SpriteTableY[MAXSPRITES];
+extern unsigned char SpriteTableXN[MAXSPRITES*2];
+extern unsigned char SpriteNextFree;
+extern unsigned char spritesWidth, spritesHeight, spritesTileOffset;
+
 /* ***************************************************************** */
 /* Colors / palettes handling                                        */
 /* ***************************************************************** */
@@ -346,7 +357,7 @@ unsigned char SMS_readPaddle (unsigned char port) __z88dk_fastcall __naked;
 
 #ifndef TARGET_GG
 /* pause handling (SMS only) */
-unsigned char SMS_queryPauseRequested (void);
+_Bool SMS_queryPauseRequested (void);
 void SMS_resetPauseRequest (void);
 #endif
 
@@ -486,4 +497,10 @@ void SMS_debugPrintf(const unsigned char *format, ...) __naked __preserves_regs(
 void SMS_isr (void) __naked;
 void SMS_nmi_isr (void) __naked;
 
+extern void OUTI32(void) __naked;
+extern void OUTI64(void) __naked;
+extern void OUTI96(void) __naked;
+extern void OUTI128(void) __naked;
+extern void outi_block(void) __naked;
+#endif /* #ifdef _SMSLIB_H_ */
 /* EOF */

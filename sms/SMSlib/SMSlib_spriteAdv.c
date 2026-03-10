@@ -6,10 +6,6 @@
 #include "SMSlib.h"
 #include "SMSlib_common.c"
 
-extern unsigned char SpriteTableY[MAXSPRITES];
-extern unsigned char SpriteTableXN[MAXSPRITES*2];
-extern unsigned char SpriteNextFree;
-
 signed char SMS_reserveSprite (void) {
   if (SpriteNextFree<MAXSPRITES) {
     SpriteTableY[SpriteNextFree]=0xE0;            // so it's offscreen

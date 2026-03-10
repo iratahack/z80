@@ -10,10 +10,6 @@
 #include "SMSlib.h"
 #include "SMSlib_common.c"
 
-extern unsigned char SpriteTableY[MAXSPRITES];
-extern unsigned char SpriteTableXN[MAXSPRITES*2];
-extern unsigned char SpriteNextFree;
-
 void SMS_finalizeSprites (void) {
 // *DEPRECATED* - will be dropped at some point in 2018
 }

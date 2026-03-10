@@ -45,7 +45,7 @@ __asm
 
 1$:
   out(#_VDPDataPort),a ; 11
-  .db 0                ;  4
+  .db #0x00            ;  4 (nop)
   djnz 1$              ; 13 = 28 (VRAM safe on GG too)
   dec e
   jp  nz,1$
@@ -76,14 +76,14 @@ __asm
 
   ld c,#_VDPDataPort
 
-2$:
+1$:
   out(c),e           ; 12
   dec hl             ;  6
   dec hl             ;  6
   ld a,h             ;  4 = 28 (VRAM safe on GG too)
   out(c),d           ; 12
   or a,l             ;  4
-  jr nz,2$           ; 12 = 28 (VRAM safe on GG too)
+  jr nz,1$           ; 12 = 28 (VRAM safe on GG too)
   ret                ; because this function is naked
 __endasm;
 }

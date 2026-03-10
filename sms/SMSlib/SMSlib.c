@@ -78,31 +78,31 @@ unsigned char SMS_detect_VDP_type (void) __z88dk_fastcall __naked __preserves_re
   __asm
 
     in a,(0x7E)
-@wait:
+1$:
     ld b,a
     in a,(0x7E)
     cp b
-    jr nz,@wait       ; wait until stable value
+    jr nz,1$          ; wait until stable value
 
     cp #0x80
-    jr nz,@wait       ; wait until line $80
+    jr nz,1$          ; wait until line $80
 
     ld l,a            ; load line number in L
 
 
     in a,(0x7E)
-@wait1:
+2$:
     ld b,a
     in a,(0x7E)
     cp b
-    jr nz,@wait1      ; wait until stable value
+    jr nz,2$          ; wait until stable value
 
     cp l
-    jr z,@wait1       ; wait until it is no longer on the same line
+    jr z,2$           ; wait until it is no longer on the same line
     ret c             ; we are done when new line value is less than the old one
 
     ld l,a
-    jp @wait1
+    jp 2$
   __endasm;
 }
 #endif
@@ -113,6 +113,8 @@ void SMS_init (void) {
   unsigned char i;
   /* make sure the VDP is ready */
   while (VDPVCounterPort!=0xB0);
+  /* extra care in case the BIOS had left the VDP registers with weird config */
+  while (VDPVCounterPort!=0xC8);
   /* set sprite palette color 0 to black */
 #ifndef TARGET_GG
   SMS_setSpritePaletteColor(0, RGB(0,0,0));
@@ -310,7 +312,7 @@ unsigned int SMS_getMDKeysReleased (void) {
 #endif
 
 #ifndef TARGET_GG
-unsigned char SMS_queryPauseRequested (void) {
+_Bool SMS_queryPauseRequested (void) {
   return(PauseRequested);
 }
 
@@ -336,12 +338,12 @@ void SMS_setLineCounter (unsigned char count) __z88dk_fastcall {
 unsigned char SMS_getVCount (void) __naked __preserves_regs(c,d,e,h,l,iyh,iyl) {
   __asm
     in a,(0x7E)
-4$:
+1$:
     ld b,a
     in a,(0x7E)
     cp b
     ret z          ; when we got the same value twice it is stable (Genesis/MegaDrive issue workaround)
-    jp	4$       ; wait until value is stable
+    jp 1$          ; wait until value is stable
   __endasm;
 }
 
