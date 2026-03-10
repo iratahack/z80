@@ -29,16 +29,6 @@
     PUBLIC    __Exit         ;jp'd to by exit()
     PUBLIC    l_dcal          ;jp(hl)
 
-        
-    PUBLIC    raster_procs    ;Raster interrupt handlers
-    PUBLIC    pause_procs    ;Pause interrupt handlers
-    
-    PUBLIC    _timer         ;This is incremented every time a VBL/HBL interrupt happens
-    PUBLIC    _pause_flag    ;This alternates between 0 and 1 every time pause is pressed
-    
-
-    PUBLIC  __GAMEGEAR_ENABLED
-
     PUBLIC __IO_VDP_DATA
     PUBLIC __IO_VDP_COMMAND
     PUBLIC __IO_VDP_STATUS
@@ -114,28 +104,10 @@ __RST18_SMS_crt0_RST18:
     out     (__IO_VDP_DATA),a
     ret
 
-IF ((__crt_enable_rst & $20) = $20)
-    IF ((__crt_enable_rst & $2020) = $0020)
-        EXTERN  _z80_rst_28h
-    ENDIF
-        jp      _z80_rst_28h
-ELSE
-        ret
-ENDIF
-
     defs    $0030-ASMPC
 if (ASMPC<>$0030)
     defs    CODE_ALIGNMENT_ERROR
 endif
-
-IF ((__crt_enable_rst & $40) = $40)
-    IF ((__crt_enable_rst & $4040) = $0040)
-        EXTERN  _z80_rst_30h
-    ENDIF
-        jp      _z80_rst_30h
-ELSE
-        ret
-ENDIF
 
     defs    $0038-ASMPC
 if (ASMPC<>$0038)
@@ -146,102 +118,18 @@ endif
 ;-------        
 ; Interrupt handlers
 ;-------
-  ifdef SMSLIB
     extern _SMS_isr
 __RST38_SMS_crt0_RST38:
 	jp	_SMS_isr
-  else
-int_RASTER: 
-    push    af 
-    push    hl
-    in      a, ($BF)
-    ld      (__tms9918_status_register),a
-    or      a 
-    jp      p, int_not_VBL  ; Bit 7 not set 
-
-IFDEF CLIB_SMSLIB
-    call    int_SMSLIB
-ENDIF
-
-    ; __SMSLIB_ENABLE_MDPAD and other readings
-;int_VBL: 
-    ld      hl, (_timer)
-    inc     hl
-    ld      (_timer), hl
-    ld      hl, raster_procs 
-    call    int_handler 
-interrupt_exit:
-    pop     hl
-    pop     af
-    ei
-    ret
-
-int_not_VBL: 
-   ld       hl,(__SMSlib_theLineInterruptHandler)
-   call     call_int_handler
-   jr       interrupt_exit
-  endif
-
 
     defs    $0066-ASMPC
 IF (ASMPC<>$0066)
     defs    CODE_ALIGNMENT_ERROR
 ENDIF
 
-IF (__crt_enable_nmi = 1)
-  IFDEF SMSLIB
     EXTERN  _SMS_nmi_isr
+__RST66_SMS_crt0_RST66:
     jp      _SMS_nmi_isr
-  ELSE
-    EXTERN _z80_nmi
-int_PAUSE: 
-    push    af 
-    push    hl 
-    ld      hl, _pause_flag 
-    ld      a, (hl) 
-    xor     a, 1 
-    ld      (hl), a 
-    ld      hl, pause_procs 
-    call    int_handler 
-    pop     hl 
-    pop     af 
-    retn 
-  ENDIF
-ELSE 
-  IF (__crt_enable_nmi > 1)
-    jp     __z80_nmi
-  ELSE
-    retn
-  ENDIF
-ENDIF
-
-
-
-int_handler: 
-    push    bc 
-    push    de 
-int_loop: 
-    ld      a, (hl) 
-    inc     hl 
-    or      (hl) 
-    jr      z, int_done 
-    push    hl 
-    ld      a, (hl) 
-    dec     hl 
-    ld      l, (hl) 
-    ld      h, a 
-    call    call_int_handler 
-    pop     hl 
-    inc     hl 
-    jr      int_loop 
-int_done: 
-    pop     de 
-    pop     bc 
-    ret 
-
-call_int_handler: 
-l_dcal:
-    jp      (hl) 
 
 ;-------        
 ; Beginning of the actual code
@@ -261,9 +149,6 @@ start:
     call    crt0_init
     INCLUDE "crt/classic/crt_init_atexit.inc"
 
-    call    DefaultInitialiseVDP
-    call    clear_vram
-    
     im      1
     ei
     call    _main
@@ -274,82 +159,12 @@ __Exit:
 endloop:
     jr      endloop
 
+l_dcal:
+    jp      (hl) 
 
-;---------------------------------
-; VDP Initialization
-;---------------------------------
-DefaultInitialiseVDP:
-    ld      hl,_Data
-    ld      b,_End-_Data
-    ld      c,$bf
-    otir
-IF __GAMEGEAR__
-    ; Load default palette for gamegear
-    EXTERN asm_load_palette_gamegear
-    ld      hl,gg_palette
-    ld      b,16
-    ld      c,0
-    call    asm_load_palette_gamegear
-ENDIF
     PUBLIC  l_ret
 l_ret:
     ret
-
-IF __GAMEGEAR__
-gg_palette:
-    defw 0x0000             ;transparent
-    defw 0x0000             ;00 00 00
-    defw 0x00a0             ;00 aa 00
-    defw 0x00f0             ;00 ff 00
-    defw 0x0500             ;00 00 55
-    defw 0x0f00             ;00 00 ff
-    defw 0x0005             ;55 00 00
-    defw 0x0ff0             ;00 ff ff
-    defw 0x000a             ;aa 00 00
-    defw 0x000f             ;ff 00 00
-    defw 0x0055             ;00 55 55
-    defw 0x00ff             ;ff ff 00
-    defw 0x0050             ;00 55 00
-    defw 0x0f0f             ;ff 00 ff
-    defw 0x0555             ;55 55 55
-    defw 0x0fff             ;ff ff ff
-ENDIF
-
-_Data: 
-    defb @00000110,$80
-    ;     |||||||`- Disable synch 
-    ;     ||||||`-- Enable extra height modes 
-    ;     |||||`--- SMS mode instead of SG 
-    ;     ||||`---- Shift sprites left 8 pixels 
-    ;     |||`----- Enable line interrupts 
-    ;     ||`------ Blank leftmost column for scrolling 
-    ;     |`------- Fix top 2 rows during horizontal scrolling 
-    ;     `-------- Fix right 8 columns during vertical scrolling 
-    defb @10000000,$81 
-    ;      |||| |`- Zoomed sprites -> 16x16 pixels 
-    ;      |||| `-- Doubled sprites -> 2 tiles per sprite, 8x16 
-    ;      |||`---- 30 row/240 line mode 
-    ;      ||`----- 28 row/224 line mode 
-    ;      |`------ Enable VBlank interrupts 
-    ;      `------- Enable display 
-    defb (__SMS_VRAM_SCREEN_MAP_ADDRESS/1024) |@11110001,$82 
-    defb $FF,$83 
-    defb $FF,$84 
-    defb (__SMS_VRAM_SPRITE_ATTRIBUTE_TABLE_ADDRESS/128)|@10000001,$85 
-IF CLIB_SMSLIB
-    defb ((__SMS_VRAM_SPRITE_PATTERN_BASE_ADDRESS & 0x2000) >> 11) + 0xfb, 0x86
-ELSE
-    defb ((__SMS_VRAM_SPRITE_PATTERN_BASE_ADDRESS_CLASSIC & 0x2000) >> 11) + 0xfb, 0x86
-ENDIF
-    defb $f|$f0,$87 
-    ;     `-------- Border palette colour (sprite palette) 
-    defb $00,$88 
-    ;     ``------- Horizontal scroll 
-    defb $00,$89 
-    ;     ``------- Vertical scroll 
-    defb $ff,$8a 
-    ;     ``------- Line interrupt spacing ($ff to disable) 
-_End:
 
 IF CRT_ENABLE_BANKED_CALLS = 1
     GLOBAL  banked_call
@@ -388,108 +203,6 @@ banked_call:
     ret
 ENDIF
 
-
-IFDEF CLIB_SMSLIB
-
-    EXTERN  __SMSlib_VDPBlank
-    EXTERN  __SMSlib_KeysStatus
-    EXTERN  __SMSlib_PreviousKeysStatus
-
-int_SMSLIB:
-IFNDEF CLIB_SMSLIB_MDPAD
-   ld hl,__SMSlib_VDPBlank
-   ld (hl),1
-   
-   ld hl,(__SMSlib_KeysStatus)
-   ld (__SMSlib_PreviousKeysStatus),hl
-   
-   in a,(__IO_JOYSTICK_READ_L)
-   cpl
-   ld (__SMSlib_KeysStatus),a
-   
-   in a,(__IO_JOYSTICK_READ_H)
-   cpl
-   ld (__SMSlib_KeysStatus + 1),a
-ELSE
-    defc TH_HI = 0xf5
-    defc TH_LO = 0xd5
-
-   ld hl,__SMSlib_VDPBlank
-   ld (hl),1
-   
-   ld hl,(__SMSlib_KeysStatus)
-   ld (__SMSlib_PreviousKeysStatus),hl
-   
-   ld hl,(__SMSlib_MDKeysStatus)
-   ld (__SMSlib_PreviousMDKeysStatus),hl
-   
-   ld a,TH_HI
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-
-   in a,(__IO_JOYSTICK_READ_L)
-   cpl
-   ld l,a
-   
-   in a,(__IO_JOYSTICK_READ_H)
-   cpl
-   ld h,a
-   
-   ld (__SMSlib_KeysStatus),hl
-   
-   ld a,TH_LO
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-   
-   in a,(__IO_JOYSTICK_READ_L)
-   
-   ld h,0
-   ld l,a
-
-   ; hl = MDKeysStatus
-   
-   and 0x0c
-   jr z, read
-
-   ld l,h
-   jr set_MDKeysStatus
-
-read:
-   
-   ld a,l
-   cpl
-   and 0x30
-   ld l,a
-   
-   ld a,TH_HI
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-   
-   ld a,TH_LO
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-   
-   in a,(__IO_JOYSTICK_READ_L)
-   and 0x0f
-   jr nz, set_MDKeysStatus
-   
-   ld a,TH_HI
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-   
-   in a,(__IO_JOYSTICK_READ_L)
-   cpl
-   and 0x0f
-   or l
-   ld l,a
-   
-   ld a,TH_LO
-   out (__IO_JOYSTICK_PORT_CONTROL),a
-
-set_MDKeysStatus:
-
-   ld (__SMSlib_MDKeysStatus),h
-ENDIF
-   ret
-ENDIF
-
-
-
     INCLUDE "crt/classic/crt_runtime_selection.inc"
 
     ; And include handling disabling screenmodes
@@ -520,22 +233,6 @@ __current_bank: defb    2
         SECTION data_driver
 tempsp: defw    tempstack + CLIB_BANKING_STACK_SIZE
 ENDIF
-
-        SECTION bss_crt
-
-        PUBLIC  __SMSlib_PauseRequested
-        PUBLIC  __SMSlib_theLineInterruptHandler
-
-raster_procs:       defs    16    ;Raster interrupt handlers
-pause_procs:        defs    16    ;Pause interrupt handlers
-_timer:             defw    0    ;This is incremented every time a VBL interrupt happens
-__SMSlib_PauseRequested:
-_pause_flag:        defb    0    ;This alternates between 0 and 1 every time pause is pressed
-__gamegear_flag:    defb    0    ;Non zero if running on a gamegear
-
-__SMSlib_theLineInterruptHandler:
-                    defw    l_ret
-
 
     ; DEFINE SECTIONS FOR BANKSWITCHING
     ; consistent with appmake and new c library

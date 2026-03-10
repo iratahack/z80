@@ -52,6 +52,7 @@ void main(void)
     for (;;)
     {
         static char keyStatus;
+        SMS_getVCount(); //testing
         SMS_updateSpritePosition(sprite, x, y);
         SMS_updateSpritePosition(sprite + 1, x + 8, y);
         keyStatus = SMS_getKeysStatus();

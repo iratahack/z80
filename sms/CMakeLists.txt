@@ -8,7 +8,7 @@ set(CMAKE_TOOLCHAIN_FILE /snap/z88dk/current/share/z88dk/cmake/Toolchain-zcc.cma
 project(Hello C)
 
 add_link_options(-crt0 ${PROJECT_SOURCE_DIR}/sms_crt0.asm -m -create-app -L${PROJECT_SOURCE_DIR} -Ca-DSMSLIB -pragma-redirect:fputc_cons=_SMS_putchar)
-add_compile_options(-compiler=sdcc --fsigned-char -custom-copt-rules=${PROJECT_SOURCE_DIR}/SMSlib/rules.copt -DVDPTYPE_DETECTION)
+add_compile_options(-compiler=sdcc -O3 -SO3 --fsigned-char -custom-copt-rules=${PROJECT_SOURCE_DIR}/SMSlib/rules.copt -DVDPTYPE_DETECTION)
 add_subdirectory(SMSlib)
 add_executable(${PROJECT_NAME} main.c)
 add_dependencies(${PROJECT_NAME} SMSlib)
